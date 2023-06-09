@@ -2,6 +2,7 @@
 	let inputValue = '';
 	let chatResponseStream = [];
 	let chatResponses = [];
+	let messageArray = [];
 	let isLoading = false;
 	let isStreaming = false;
 	let isError = false;
@@ -11,7 +12,7 @@
 	async function getChatResponse(data) {
 		const model = {
 			model: 'gpt-3.5-turbo',
-			messages: [{ role: 'user', content: data }],
+			messages: [...messageArray, { role: 'user', content: data }],
 			stream: true
 		};
 
@@ -30,6 +31,7 @@
 			});
 
 			if (response.status === 200) {
+				messageArray = [...messageArray, { role: 'user', content: data }];
 				const reader = response.body.getReader();
 				isStreaming = true;
 
