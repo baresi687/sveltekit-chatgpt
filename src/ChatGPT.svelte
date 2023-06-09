@@ -7,7 +7,7 @@
 	let isError = false;
 	let errorString = '';
 	const decoder = new TextDecoder('utf-8');
-	const API_KEY = import.meta.env.VITE_CHATGPT_KEY;
+	const envVariables = { API_KEY: import.meta.env.VITE_CHATGPT_KEY };
 
 	async function getChatResponse(data) {
 		const model = {
@@ -24,7 +24,7 @@
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					Authorization: `Bearer ${API_KEY}`
+					Authorization: `Bearer ${envVariables.API_KEY}`
 				},
 
 				body: JSON.stringify(model)
