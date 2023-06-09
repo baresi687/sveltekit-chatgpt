@@ -114,9 +114,9 @@
 		{/if}
 	</form>
 	{#if isLoading}
-		<div class="absolute bg-slate-950 h-28 z-10 shadow rounded-md w-full mx-auto my-5">
+		<div class="absolute top-[4.5rem] bg-slate-950 z-10 shadow rounded-md w-full mx-auto">
 			<div class="animate-pulse flex space-x-4">
-				<div class="flex-1 space-y-6 py-1">
+				<div class="flex-1 space-y-6 pb-4">
 					<div class="h-2 bg-slate-700 rounded" />
 					<div class="h-2 bg-slate-700 rounded" />
 					<div class="space-y-3">
@@ -130,14 +130,14 @@
 		</div>
 	{/if}
 	{#if isStreaming}
-		<div class="whitespace-pre-line rounded my-8 p-4 bg-zinc-800 text-zinc-200">
+		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
 			{chatResponseStream}
 		</div>
 	{/if}
 	{#each chatResponses as chatResponse}
-		<div class="whitespace-pre-line rounded my-8 p-4 bg-zinc-800 text-zinc-200">
+		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
 			{chatResponse.stream}
-			<div class="text-sm mt-3 bg-zinc-900 p-2 rounded w-fit">
+			<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
 				Your message: <span class="font-semibold">{chatResponse.message}</span>
 			</div>
 		</div>
