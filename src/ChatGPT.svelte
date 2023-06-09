@@ -57,7 +57,7 @@
 					chatResponseStream = [streamString];
 
 					if (done) {
-						chatResponses = [streamString, ...chatResponses];
+						chatResponses = [{ message: data, stream: streamString }, ...chatResponses];
 						isStreaming = false;
 						return;
 					}
@@ -82,9 +82,8 @@
 		e.preventDefault();
 
 		if (inputValue) {
-			getChatResponse(inputValue).then();
+			getChatResponse(inputValue).finally(() => (inputValue = ''));
 		}
-		inputValue = '';
 	}
 </script>
 
@@ -137,7 +136,10 @@
 	{/if}
 	{#each chatResponses as chatResponse}
 		<div class="whitespace-pre-line rounded my-8 p-4 bg-zinc-800 text-zinc-200">
-			{chatResponse}
+			{chatResponse.stream}
+			<div class="text-sm mt-3 bg-zinc-900 p-2 rounded w-fit">
+				Your message: <span class="font-semibold">{chatResponse.message}</span>
+			</div>
 		</div>
 	{/each}
 	{#if isError}
