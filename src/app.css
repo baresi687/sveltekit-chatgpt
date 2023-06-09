@@ -4,7 +4,11 @@
 
 @layer base {
 	body {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
 		background-color: #020617;
 		color: #f1f5f9;
+		overflow-y: scroll;
 	}
 }

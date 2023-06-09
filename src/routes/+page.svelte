@@ -10,8 +10,8 @@
 		</div>
 	</section>
 </main>
-<footer class="mt-48">
+<footer class="mt-auto mb-4">
 	<div class="container mx-auto px-4">
-		<p class="text-center text-sm">This site is for educational purpose only</p>
+		<p class="text-center text-sm">Hreinn Gylfason · This site is for educational purpose only</p>
 	</div>
 </footer>
