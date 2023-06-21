@@ -1,4 +1,6 @@
 <script>
+	import { CodeBlock } from '@skeletonlabs/skeleton';
+
 	let inputValue = '';
 	let chatResponseStream = [];
 	let chatResponses = [];
@@ -7,6 +9,13 @@
 	let isStreaming = false;
 	let isError = false;
 	let errorString = '';
+	let streamString = '';
+	let textString = '';
+	let codeBlockStream = '';
+	let isCode = false;
+	let codeBlockIncrement = 0;
+	let codeBlock = 'code';
+
 	const decoder = new TextDecoder('utf-8');
 
 	async function getChatResponse(data) {
@@ -19,7 +28,7 @@
 		try {
 			isLoading = true;
 			isError = false;
-			let streamString = '';
+
 			const response = await fetch('https://api.openai.com/v1/chat/completions', {
 				method: 'POST',
 				headers: {
@@ -31,6 +40,7 @@
 			});
 
 			if (response.status === 200) {
+				chatResponseStream = [];
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				const reader = response.body.getReader();
 				isStreaming = true;
@@ -45,20 +55,68 @@
 						.map((line) => JSON.parse(line));
 
 					for (const elem of parsedLines) {
-						const { choices } = elem;
-						const { delta } = choices[0];
-						const { content } = delta;
+						const content = elem.choices[0].delta.content;
+
+						codeBlockStream = '';
+						textString = '';
 
 						if (content) {
 							streamString += content;
+							if (content === '``' || content === '```') {
+								isCode = !isCode;
+								if (isCode) {
+									codeBlockIncrement = codeBlockIncrement + 1;
+									codeBlock = 'code' + codeBlockIncrement.toString();
+									chatResponseStream = [
+										...chatResponseStream,
+										{
+											[codeBlock]: 'string',
+											code: '',
+											language: 'plaintext'
+										}
+									];
+								}
+							}
+
+							if (isCode) {
+								codeBlockStream += content;
+								const findIt = chatResponseStream.findIndex((item) => item[codeBlock]);
+								let codeBackTicks = streamString.match(/```[a-z]*\s/g);
+
+								if (codeBackTicks) {
+									codeBackTicks = codeBackTicks.map((item) =>
+										item.slice(0, item.length - 1).slice(3)
+									);
+
+									chatResponseStream[findIt].code = chatResponseStream[findIt].code.replace(
+										codeBackTicks[codeBackTicks.length - 1],
+										''
+									);
+
+									chatResponseStream[findIt].language = codeBackTicks[codeBackTicks.length - 1]
+										.length
+										? codeBackTicks[codeBackTicks.length - 1]
+										: 'plaintext';
+								}
+
+								chatResponseStream[findIt].code = chatResponseStream[findIt].code.replace(
+									/string|`/,
+									''
+								);
+
+								chatResponseStream[findIt].code += codeBlockStream;
+							} else {
+								textString += content;
+								textString = textString.replace(/```|``|`/, '');
+								chatResponseStream = [...chatResponseStream, textString];
+							}
 						}
 					}
 
-					chatResponseStream = [streamString];
-
 					if (done) {
-						chatResponses = [{ message: data, stream: streamString }, ...chatResponses];
+						chatResponses = [{ message: data, stream: chatResponseStream }, ...chatResponses];
 						isStreaming = false;
+						isCode = false;
 						return;
 					}
 					return reader.read().then(processText);
@@ -114,7 +172,7 @@
 		{/if}
 	</form>
 	{#if isLoading}
-		<div class="absolute top-[4.5rem] bg-slate-950 z-10 shadow rounded-md w-full mx-auto">
+		<div class="absolute top-[4.5rem] bg-skeletonDark z-10 shadow rounded-md w-full mx-auto">
 			<div class="animate-pulse flex space-x-4">
 				<div class="flex-1 space-y-6 pb-4">
 					<div class="h-2 bg-slate-700 rounded" />
@@ -131,12 +189,24 @@
 	{/if}
 	{#if isStreaming}
 		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{chatResponseStream}
+			{#each chatResponseStream as stream}
+				{#if stream.code}
+					<CodeBlock language={stream.language} code={stream.code} />
+				{:else}
+					{stream}
+				{/if}
+			{/each}
 		</div>
 	{/if}
 	{#each chatResponses as chatResponse}
 		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{chatResponse.stream}
+			{#each chatResponse.stream as stream}
+				{#if stream.code}
+					<CodeBlock language={stream.language} code={stream.code} />
+				{:else}
+					{stream}
+				{/if}
+			{/each}
 			<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
 				Your message: <span class="font-semibold">{chatResponse.message}</span>
 			</div>
