@@ -1,5 +1,5 @@
 <script>
-	import ChatGPT from '../ChatGPT.svelte';
+	import ChatGPT from '../components/ChatGPT.svelte';
 </script>
 
 <main>

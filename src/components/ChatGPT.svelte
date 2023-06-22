@@ -1,4 +1,7 @@
 <script>
+	import { CodeBlock } from '@skeletonlabs/skeleton';
+	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks.js';
+
 	let inputValue = '';
 	let chatResponseStream = [];
 	let chatResponses = [];
@@ -7,6 +10,7 @@
 	let isStreaming = false;
 	let isError = false;
 	let errorString = '';
+	let parsedLines = [];
 	const decoder = new TextDecoder('utf-8');
 
 	async function getChatResponse(data) {
@@ -19,7 +23,7 @@
 		try {
 			isLoading = true;
 			isError = false;
-			let streamString = '';
+
 			const response = await fetch('https://api.openai.com/v1/chat/completions', {
 				method: 'POST',
 				headers: {
@@ -39,26 +43,25 @@
 					const decodedChunk = decoder.decode(value);
 					const lines = decodedChunk.split('\n');
 
-					const parsedLines = lines
+					parsedLines = lines
 						.map((line) => line.replace(/^data: /, '').trim())
 						.filter((line) => line.includes('content') && line !== '' && line !== '[DONE]')
 						.map((line) => JSON.parse(line));
 
-					for (const elem of parsedLines) {
-						const { choices } = elem;
-						const { delta } = choices[0];
-						const { content } = delta;
-
-						if (content) {
-							streamString += content;
-						}
-					}
-
-					chatResponseStream = [streamString];
+					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
 
 					if (done) {
-						chatResponses = [{ message: data, stream: streamString }, ...chatResponses];
+						inputValue = '';
+						chatResponses = [
+							{
+								message: data,
+								stream: [...processTextAndCodeBlocks(parsedLines, chatResponseStream)]
+							},
+							...chatResponses
+						];
 						isStreaming = false;
+						chatResponseStream = [];
+
 						return;
 					}
 					return reader.read().then(processText);
@@ -82,7 +85,7 @@
 		e.preventDefault();
 
 		if (inputValue) {
-			getChatResponse(inputValue).finally(() => (inputValue = ''));
+			getChatResponse(inputValue).then();
 		}
 	}
 </script>
@@ -92,11 +95,15 @@
 		<input
 			bind:value={inputValue}
 			id="chat"
-			class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600"
+			class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
 			type="text"
 			placeholder="Send a message"
+			disabled={isStreaming}
 		/>
-		{#if inputValue}
+		{#if isStreaming}
+			<div class="absolute top-2.5 right-4 placeholder-circle w-5 animate-pulse" />
+		{/if}
+		{#if inputValue && !isStreaming}
 			<button on:click={handleChat} class="absolute top-3 right-4">
 				<svg
 					aria-label="Submit question"
@@ -114,7 +121,7 @@
 		{/if}
 	</form>
 	{#if isLoading}
-		<div class="absolute top-[4.5rem] bg-slate-950 z-10 shadow rounded-md w-full mx-auto">
+		<div class="absolute top-[4.5rem] bg-skeletonDark z-10 shadow rounded-md w-full mx-auto">
 			<div class="animate-pulse flex space-x-4">
 				<div class="flex-1 space-y-6 pb-4">
 					<div class="h-2 bg-slate-700 rounded" />
@@ -131,19 +138,31 @@
 	{/if}
 	{#if isStreaming}
 		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{chatResponseStream}
+			{#each chatResponseStream as stream}
+				{#if stream.code}
+					<CodeBlock language={stream.language} code={stream.code} />
+				{:else}
+					<p>{stream.text}</p>
+				{/if}
+			{/each}
 		</div>
 	{/if}
 	{#each chatResponses as chatResponse}
 		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{chatResponse.stream}
+			{#each chatResponse.stream as stream}
+				{#if stream.code}
+					<CodeBlock language={stream.language} code={stream.code} />
+				{:else}
+					<p>{stream.text}</p>
+				{/if}
+			{/each}
 			<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
 				Your message: <span class="font-semibold">{chatResponse.message}</span>
 			</div>
 		</div>
 	{/each}
 	{#if isError}
-		<div class="absolute top-12 min-h-screen z-10 bg-slate-950 w-full">
+		<div class="absolute top-10 min-h-screen z-10 bg-transparent w-full">
 			<div class="bg-red-900 whitespace-pre-line rounded my-8 p-4 text-zinc-200">
 				{errorString}
 			</div>

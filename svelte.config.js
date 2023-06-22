@@ -1,3 +1,4 @@
+import preprocess from 'svelte-preprocess';
 import adapter from '@sveltejs/adapter-netlify';
 import { vitePreprocess } from '@sveltejs/kit/vite';
 
@@ -18,7 +19,12 @@ const config = {
 			split: false
 		})
 	},
-	preprocess: vitePreprocess()
+	preprocess: [
+		vitePreprocess(),
+		preprocess({
+			postcss: true
+		})
+	]
 };
 
 export default config;
