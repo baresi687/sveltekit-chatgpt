@@ -1,5 +1,6 @@
 <script>
 	import { CodeBlock } from '@skeletonlabs/skeleton';
+	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks.js';
 
 	let inputValue = '';
 	let chatResponseStream = [];
@@ -9,13 +10,7 @@
 	let isStreaming = false;
 	let isError = false;
 	let errorString = '';
-	let streamString = '';
-	let textString = '';
-	let codeBlockStream = '';
-	let isCode = false;
-	let codeBlockIncrement = 0;
-	let codeBlock = 'code';
-
+	let parsedLines = [];
 	const decoder = new TextDecoder('utf-8');
 
 	async function getChatResponse(data) {
@@ -40,7 +35,6 @@
 			});
 
 			if (response.status === 200) {
-				chatResponseStream = [];
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				const reader = response.body.getReader();
 				isStreaming = true;
@@ -49,74 +43,24 @@
 					const decodedChunk = decoder.decode(value);
 					const lines = decodedChunk.split('\n');
 
-					const parsedLines = lines
+					parsedLines = lines
 						.map((line) => line.replace(/^data: /, '').trim())
 						.filter((line) => line.includes('content') && line !== '' && line !== '[DONE]')
 						.map((line) => JSON.parse(line));
 
-					for (const elem of parsedLines) {
-						const content = elem.choices[0].delta.content;
-
-						codeBlockStream = '';
-						textString = '';
-
-						if (content) {
-							streamString += content;
-							if (content === '``' || content === '```') {
-								isCode = !isCode;
-								if (isCode) {
-									codeBlockIncrement = codeBlockIncrement + 1;
-									codeBlock = 'code' + codeBlockIncrement.toString();
-									chatResponseStream = [
-										...chatResponseStream,
-										{
-											[codeBlock]: 'string',
-											code: '',
-											language: 'plaintext'
-										}
-									];
-								}
-							}
-
-							if (isCode) {
-								codeBlockStream += content;
-								const findIt = chatResponseStream.findIndex((item) => item[codeBlock]);
-								let codeBackTicks = streamString.match(/```[a-z]*\s/g);
-
-								if (codeBackTicks) {
-									codeBackTicks = codeBackTicks.map((item) =>
-										item.slice(0, item.length - 1).slice(3)
-									);
-
-									chatResponseStream[findIt].code = chatResponseStream[findIt].code.replace(
-										codeBackTicks[codeBackTicks.length - 1],
-										''
-									);
-
-									chatResponseStream[findIt].language = codeBackTicks[codeBackTicks.length - 1]
-										.length
-										? codeBackTicks[codeBackTicks.length - 1]
-										: 'plaintext';
-								}
-
-								chatResponseStream[findIt].code = chatResponseStream[findIt].code.replace(
-									/string|`/,
-									''
-								);
-
-								chatResponseStream[findIt].code += codeBlockStream;
-							} else {
-								textString += content;
-								textString = textString.replace(/```|``|`/, '');
-								chatResponseStream = [...chatResponseStream, textString];
-							}
-						}
-					}
+					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
 
 					if (done) {
-						chatResponses = [{ message: data, stream: chatResponseStream }, ...chatResponses];
+						chatResponses = [
+							{
+								message: data,
+								stream: [...processTextAndCodeBlocks(parsedLines, chatResponseStream)]
+							},
+							...chatResponses
+						];
 						isStreaming = false;
-						isCode = false;
+						chatResponseStream = [];
+
 						return;
 					}
 					return reader.read().then(processText);
@@ -213,7 +157,7 @@
 		</div>
 	{/each}
 	{#if isError}
-		<div class="absolute top-12 min-h-screen z-10 bg-slate-950 w-full">
+		<div class="absolute top-10 min-h-screen z-10 bg-transparent w-full">
 			<div class="bg-red-900 whitespace-pre-line rounded my-8 p-4 text-zinc-200">
 				{errorString}
 			</div>
