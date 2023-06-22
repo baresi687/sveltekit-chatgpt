@@ -51,6 +51,7 @@
 					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
 
 					if (done) {
+						inputValue = '';
 						chatResponses = [
 							{
 								message: data,
@@ -84,7 +85,7 @@
 		e.preventDefault();
 
 		if (inputValue) {
-			getChatResponse(inputValue).finally(() => (inputValue = ''));
+			getChatResponse(inputValue).then();
 		}
 	}
 </script>
@@ -94,11 +95,15 @@
 		<input
 			bind:value={inputValue}
 			id="chat"
-			class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600"
+			class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
 			type="text"
 			placeholder="Send a message"
+			disabled={isStreaming}
 		/>
-		{#if inputValue}
+		{#if isStreaming}
+			<div class="absolute top-2.5 right-4 placeholder-circle w-5 animate-pulse" />
+		{/if}
+		{#if inputValue && !isStreaming}
 			<button on:click={handleChat} class="absolute top-3 right-4">
 				<svg
 					aria-label="Submit question"
@@ -137,7 +142,7 @@
 				{#if stream.code}
 					<CodeBlock language={stream.language} code={stream.code} />
 				{:else}
-					{stream}
+					<p>{stream.text}</p>
 				{/if}
 			{/each}
 		</div>
@@ -148,7 +153,7 @@
 				{#if stream.code}
 					<CodeBlock language={stream.language} code={stream.code} />
 				{:else}
-					{stream}
+					<p>{stream.text}</p>
 				{/if}
 			{/each}
 			<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
