@@ -4,14 +4,12 @@
 
 <main>
 	<section class="my-20">
-		<div class="container mx-auto px-4">
-			<h1 class="text-center text-5xl">Sveltekit ChatGPT</h1>
-			<ChatGPT />
-		</div>
+		<h1 class="text-center text-5xl">Sveltekit ChatGPT</h1>
+		<ChatGPT />
 	</section>
 </main>
-<footer class="mt-auto mb-4">
-	<div class="container mx-auto px-4">
-		<p class="text-center text-sm">Hreinn Gylfason · This site is for educational purpose only</p>
-	</div>
+<footer class="fixed bottom-5 z-50 bg-slate-800 w-full">
+	<p class="flex justify-center text-xs">
+		Hreinn Gylfason · This site is for educational purpose only
+	</p>
 </footer>
