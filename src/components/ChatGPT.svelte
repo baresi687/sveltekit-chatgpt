@@ -39,6 +39,14 @@
 				const reader = response.body.getReader();
 				isStreaming = true;
 
+				chatResponses = [
+					{
+						message: data,
+						stream: []
+					},
+					...chatResponses
+				];
+
 				reader.read().then(function processText({ done, value }) {
 					const decodedChunk = decoder.decode(value);
 					const lines = decodedChunk.split('\n');
@@ -49,19 +57,12 @@
 						.map((line) => JSON.parse(line));
 
 					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
+					chatResponses[0].stream = [...chatResponseStream];
 
 					if (done) {
 						inputValue = '';
-						chatResponses = [
-							{
-								message: data,
-								stream: [...processTextAndCodeBlocks(parsedLines, chatResponseStream)]
-							},
-							...chatResponses
-						];
-						isStreaming = false;
 						chatResponseStream = [];
-
+						isStreaming = false;
 						return;
 					}
 					return reader.read().then(processText);
@@ -136,31 +137,24 @@
 			</div>
 		</div>
 	{/if}
-	{#if isStreaming}
-		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{#each chatResponseStream as stream}
-				{#if stream.code}
-					<CodeBlock language={stream.language} code={stream.code} />
-				{:else}
-					<p>{stream.text}</p>
+	{#if chatResponses.length > 0}
+		{#each chatResponses as chatResponse}
+			<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
+				{#each chatResponse.stream as stream}
+					{#if stream.code}
+						<CodeBlock language={stream.language} code={stream.code} />
+					{:else}
+						<p>{stream.text}</p>
+					{/if}
+				{/each}
+				{#if !isStreaming}
+					<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
+						Your message: <span class="font-semibold">{chatResponse.message}</span>
+					</div>
 				{/if}
-			{/each}
-		</div>
-	{/if}
-	{#each chatResponses as chatResponse}
-		<div class="whitespace-pre-line rounded my-8 p-4 bg-slate-800 text-zinc-200">
-			{#each chatResponse.stream as stream}
-				{#if stream.code}
-					<CodeBlock language={stream.language} code={stream.code} />
-				{:else}
-					<p>{stream.text}</p>
-				{/if}
-			{/each}
-			<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
-				Your message: <span class="font-semibold">{chatResponse.message}</span>
 			</div>
-		</div>
-	{/each}
+		{/each}
+	{/if}
 	{#if isError}
 		<div class="absolute top-10 min-h-screen z-10 bg-transparent w-full">
 			<div class="bg-red-900 whitespace-pre-line rounded my-8 p-4 text-zinc-200">

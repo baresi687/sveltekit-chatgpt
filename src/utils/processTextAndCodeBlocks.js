@@ -63,6 +63,6 @@ export function processTextAndCodeBlocks(stream, arr) {
 			textString = '';
 		}
 	}
-	console.log(arr);
+
 	return arr;
 }
