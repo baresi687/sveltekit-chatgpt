@@ -8,7 +8,7 @@ ChatGPT app built with SvelteKit.
 
 ## Built With
 
-- [Sveltekit](https://kit.svelte.dev/)
+- [SvelteKit](https://kit.svelte.dev/)
 - [OpenAI API](https://platform.openai.com/overview)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Skeleton UI toolkit](https://www.skeleton.dev/)
@@ -38,8 +38,7 @@ npm install
 ```
 
 3. Sign up with [OpenAI](https://platform.openai.com/account/api-keys) and create an API key.
-<br>
-Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY** 
+- Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY** 
 
 
 ### Running
@@ -53,7 +52,7 @@ npm run preview
 
 ## Deployed site
 
-[Sveltekit ChatGPT](https://sveltekit-chatgpt-hreinn.netlify.app/)
+[SvelteKit ChatGPT](https://sveltekit-chatgpt-hreinn.netlify.app/)
 
 ## Contact
 
