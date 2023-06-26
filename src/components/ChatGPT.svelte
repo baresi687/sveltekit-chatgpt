@@ -68,7 +68,7 @@
 
 					parsedLines = lines
 						.map((line) => line.replace(/^data: /, '').trim())
-						.filter((line) => line.includes('content') && line !== '' && line !== '[DONE]')
+						.filter((line) => line.startsWith('{"id'))
 						.map((line) => JSON.parse(line));
 
 					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
