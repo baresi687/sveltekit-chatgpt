@@ -51,8 +51,9 @@
 			});
 
 			if (response.status === 200) {
-				messageArray = [...messageArray, { role: 'user', content: data }];
 				const reader = response.body.getReader();
+				let isStreamError = [];
+				messageArray = [...messageArray, { role: 'user', content: data }];
 				isStreaming = true;
 
 				chatResponses = [
@@ -65,18 +66,31 @@
 				reader.read().then(function processText({ done, value }) {
 					const decodedChunk = decoder.decode(value);
 					const lines = decodedChunk.split('\n');
+					let parsedContent;
 
 					parsedLines = lines
 						.map((line) => line.replace(/^data: /, '').trim())
-						.filter((line) => line.startsWith('{"id'))
+						.filter((line) => line.startsWith('{"id') || line.startsWith('{"error'))
 						.map((line) => JSON.parse(line));
 
-					chatResponseStream = [...processTextAndCodeBlocks(parsedLines, chatResponseStream)];
+					parsedContent = parsedLines.filter((line) => line.id);
+					isStreamError = [...parsedLines.filter((line) => line.error)];
+
+					chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 					chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
+					if (isStreamError.length) {
+						isError = true;
+						errorString = 'An error occurred. Please try again later';
+					}
+
 					if (done) {
-						inputValue = '';
-						chatResponses[chatResponses.length - 1].message = data;
+						if (isStreamError.length) {
+							chatResponses = chatResponses.slice(0, -1);
+						} else {
+							chatResponses[chatResponses.length - 1].message = data;
+							inputValue = '';
+						}
 						chatResponseStream = [];
 						isStreaming = false;
 						regainFocus();
@@ -172,12 +186,12 @@
 				class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
 				type="text"
 				placeholder="Send a message"
-				disabled={isStreaming}
+				disabled={isLoading || isStreaming}
 			/>
-			{#if isStreaming}
+			{#if isLoading || isStreaming}
 				<div class="absolute top-2.5 right-6 placeholder-circle w-5 animate-pulse" />
 			{/if}
-			{#if inputValue && !isStreaming}
+			{#if inputValue && !isStreaming && !isLoading}
 				<button on:click={handleChat} class="absolute top-3 right-6">
 					<svg
 						aria-label="Submit question"
