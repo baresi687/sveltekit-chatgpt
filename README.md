@@ -17,9 +17,8 @@ ChatGPT app built with SvelteKit.
 
 - Refactor and simplify code.
 - Improve regex and/or code for catching code blocks.
-- Switch to OpenAI Node.js library, or other community library.
-- Improve design and layout.
 - Convert to TypeScript.
+- Improve design and layout.
 
 ## Getting Started
 
