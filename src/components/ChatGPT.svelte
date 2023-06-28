@@ -74,14 +74,14 @@
 						.map((line) => JSON.parse(line));
 
 					parsedContent = parsedLines.filter((line) => line.id);
-					isStreamError = [...parsedLines.filter((line) => line.error)];
+					isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
 
 					chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 					chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
 					if (isStreamError.length) {
 						isError = true;
-						errorString = 'An error occurred. Please try again later';
+						errorString = isStreamError[0].error.message;
 					}
 
 					if (done) {
@@ -100,7 +100,7 @@
 				});
 			} else if (response.status === 429) {
 				isError = true;
-				errorString = 'Too many requests. Try again later';
+				errorString = 'Too many requests. Please try again later';
 			} else {
 				isError = true;
 				errorString = 'Something went wrong.. please try again later';
@@ -169,13 +169,15 @@
 				</div>
 			</div>
 		{/if}
-		{#if isError}
-			<div class="absolute bottom-0 left-0 z-10 w-full px-4">
-				<div class="bg-red-900 whitespace-pre-line rounded my-8 p-4 text-zinc-200">
-					{errorString}
+		<div class="relative">
+			{#if isError}
+				<div class="absolute left-0 top-0 w-full">
+					<div class="bg-red-900 whitespace-pre-line rounded mb-8 p-4 text-zinc-200">
+						{errorString}
+					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 	<div class="fixed bottom-0 z-50 w-full pt-10 pb-14 mt-4 bg-slate-800">
 		<form on:submit={handleChat} class="relative max-w-3xl mx-auto px-4">
