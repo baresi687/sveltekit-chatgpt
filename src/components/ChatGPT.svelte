@@ -39,29 +39,28 @@
 		try {
 			isLoading = true;
 			isError = false;
+			errorString = 'Something went wrong.. Please try again later';
 
+			const timeOutAbortController = new AbortController();
+			const timeOut = setTimeout(() => timeOutAbortController.abort(), 30000);
 			const response = await fetch('https://api.openai.com/v1/chat/completions', {
+				signal: timeOutAbortController.signal,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${import.meta.env.VITE_CHATGPT_KEY}`
 				},
-
 				body: JSON.stringify(model)
 			});
 
 			if (response.status === 200) {
+				clearTimeout(timeOut);
 				const reader = response.body.getReader();
 				let isStreamError = [];
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				isStreaming = true;
 
-				chatResponses = [
-					...chatResponses,
-					{
-						stream: []
-					}
-				];
+				chatResponses = [...chatResponses, { stream: [] }];
 
 				reader.read().then(function processText({ done, value }) {
 					const decodedChunk = decoder.decode(value);
@@ -96,18 +95,22 @@
 						regainFocus();
 						return;
 					}
+
 					return reader.read().then(processText);
 				});
-			} else if (response.status === 429) {
-				isError = true;
-				errorString = 'Too many requests. Please try again later';
 			} else {
 				isError = true;
-				errorString = 'Something went wrong.. please try again later';
+				if (response.status === 429) {
+					errorString = 'Too many requests. Please try again later';
+				}
+				regainFocus();
 			}
 		} catch (error) {
 			isError = true;
-			errorString = 'Something went wrong.. please try again later';
+			if (error.name === 'AbortError') {
+				errorString = 'Request timed out.  Please try again later';
+			}
+			regainFocus();
 		} finally {
 			isLoading = false;
 		}
@@ -115,7 +118,6 @@
 
 	function handleChat(e) {
 		e.preventDefault();
-
 		if (inputValue) {
 			getChatResponse(inputValue).then();
 		}
