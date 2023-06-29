@@ -55,49 +55,57 @@
 
 			if (response.status === 200) {
 				clearTimeout(timeOut);
-				const reader = response.body.getReader();
+				const reader = await response.body.getReader();
 				let isStreamError = [];
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				isStreaming = true;
 
 				chatResponses = [...chatResponses, { stream: [] }];
 
-				reader.read().then(function processText({ done, value }) {
-					const decodedChunk = decoder.decode(value);
-					const lines = decodedChunk.split('\n');
-					let parsedContent;
+				reader
+					.read()
+					.then(function processText({ done, value }) {
+						const decodedChunk = decoder.decode(value);
+						const lines = decodedChunk.split('\n');
+						let parsedContent;
 
-					parsedLines = lines
-						.map((line) => line.replace(/^data: /, '').trim())
-						.filter((line) => line.startsWith('{"id') || line.startsWith('{"error'))
-						.map((line) => JSON.parse(line));
+						parsedLines = lines
+							.map((line) => line.replace(/^data: /, '').trim())
+							.filter((line) => line.startsWith('{"id') || line.startsWith('{"error'))
+							.map((line) => JSON.parse(line));
 
-					parsedContent = parsedLines.filter((line) => line.id);
-					isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
+						parsedContent = parsedLines.filter((line) => line.id);
+						isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
 
-					chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
-					chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
+						chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
+						chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
-					if (isStreamError.length) {
-						isError = true;
-						errorString = isStreamError[0].error.message;
-					}
-
-					if (done) {
 						if (isStreamError.length) {
-							chatResponses = chatResponses.slice(0, -1);
-						} else {
-							chatResponses[chatResponses.length - 1].message = data;
-							inputValue = '';
+							isError = true;
+							errorString = isStreamError[0].error.message;
 						}
+
+						if (done) {
+							if (isStreamError.length) {
+								chatResponses = chatResponses.slice(0, -1);
+							} else {
+								chatResponses[chatResponses.length - 1].message = data;
+								inputValue = '';
+							}
+							return;
+						}
+
+						return reader.read().then(processText);
+					})
+					.catch(() => {
+						chatResponses = chatResponses.slice(0, -1);
+						isError = true;
+					})
+					.finally(() => {
 						chatResponseStream = [];
 						isStreaming = false;
 						regainFocus();
-						return;
-					}
-
-					return reader.read().then(processText);
-				});
+					});
 			} else {
 				isError = true;
 				if (response.status === 429) {
