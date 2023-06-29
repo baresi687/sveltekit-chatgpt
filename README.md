@@ -6,6 +6,12 @@
 
 ChatGPT app built with SvelteKit.
 
+### Features
+
+- Streaming responses with auto scroll
+- Remembers previous message
+- Supports code blocks with syntax highlighting
+
 ## Built With
 
 - [SvelteKit](https://kit.svelte.dev/)
@@ -15,10 +21,9 @@ ChatGPT app built with SvelteKit.
 
 ## To do
 
-- Refactor and simplify code.
-- Improve regex and/or code for catching code blocks.
-- Convert to TypeScript.
-- Improve design and layout.
+- Handle timeout errors mid-stream
+- Improve regex and/or code for catching code blocks
+- Convert to TypeScript
 
 ## Getting Started
 
@@ -37,7 +42,7 @@ npm install
 ```
 
 3. Sign up with [OpenAI](https://platform.openai.com/account/api-keys) and create an API key.
-- Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY** 
+- Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY**
 
 
 ### Running
