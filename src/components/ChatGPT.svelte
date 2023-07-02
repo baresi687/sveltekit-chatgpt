@@ -71,16 +71,27 @@
 
 						parsedLines = lines
 							.map((line) => line.replace(/^data: /, '').trim())
-							.filter((line) => line.startsWith('{"id') || line.startsWith('{"error'))
-							.map((line) => JSON.parse(line));
+							.filter(
+								(line) => line.startsWith('{"id') || line.startsWith('{"error') || line === '[DONE]'
+							)
+							.map((line) => {
+								if (line.startsWith('{"id') || line.startsWith('{"error')) {
+									return JSON.parse(line);
+								} else {
+									return JSON.parse('{"done": true}');
+								}
+							});
 
-						parsedContent = parsedLines.filter((line) => line.id);
+						parsedContent = parsedLines.filter((line) => line.id || line.done);
 						isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
 
 						chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 						chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
 						if (isStreamError.length) {
+							chatResponseStream = [
+								...processTextAndCodeBlocks([{ done: true }], chatResponseStream)
+							];
 							isError = true;
 							errorString = isStreamError[0].error.message;
 						}
@@ -89,6 +100,11 @@
 							if (isStreamError.length) {
 								chatResponses = chatResponses.slice(0, -1);
 							} else {
+								const assistantResponse = chatResponseStream
+									.map((item) => item.text || item.code)
+									.join(' ');
+
+								messageArray = [...messageArray, { role: 'assistant', content: assistantResponse }];
 								chatResponses[chatResponses.length - 1].message = data;
 								inputValue = '';
 							}
@@ -147,10 +163,10 @@
 			{#each chatResponses as chatResponse}
 				<div class="whitespace-pre-line break-words rounded my-8 p-4 bg-slate-800 text-zinc-200">
 					{#each chatResponse.stream as stream}
-						{#if stream.code}
+						{#if stream.code !== undefined}
 							<CodeBlock language={stream.language} code={stream.code} />
 						{:else}
-							<p>{stream.text}</p>
+							<p class="my-2">{stream.text}</p>
 						{/if}
 					{/each}
 					{#if chatResponse.message}
