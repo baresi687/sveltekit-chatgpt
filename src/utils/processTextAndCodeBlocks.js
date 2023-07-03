@@ -10,7 +10,7 @@ export function processTextAndCodeBlocks(stream, arr) {
 
 			if (content) {
 				streamString += content;
-				const isCodeString = streamString.trim().match(/\n```$|^```/g);
+				const isCodeString = streamString.trim().match(/\n```$|^```$/g);
 				if (isCodeString) {
 					isCode = !isCode;
 					if (isCode) {
