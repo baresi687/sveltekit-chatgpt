@@ -4,7 +4,7 @@
 
 <main>
 	<section class="my-20">
-		<h1 class="text-center text-5xl">Sveltekit ChatGPT</h1>
+		<h1 class="text-center text-5xl px-4">Sveltekit ChatGPT</h1>
 		<ChatGPT />
 	</section>
 </main>
