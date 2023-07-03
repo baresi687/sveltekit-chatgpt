@@ -148,9 +148,11 @@
 	}
 
 	function regainFocus() {
-		setTimeout(() => {
-			inputRef.focus();
-		}, 1);
+		if (window.innerWidth >= 958) {
+			setTimeout(() => {
+				inputRef.focus();
+			}, 1);
+		}
 	}
 </script>
 
