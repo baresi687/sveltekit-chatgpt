@@ -3,8 +3,8 @@
 </script>
 
 <main class="overflow-y-scroll hide-scrollbar">
-	<section class="my-20">
-		<h1 class="text-center text-5xl px-4">SvelteKit ChatGPT</h1>
+	<section>
+		<h1 class="text-center text-5xl px-4 mt-36">SvelteKit ChatGPT</h1>
 		<ChatGPT />
 	</section>
 </main>
