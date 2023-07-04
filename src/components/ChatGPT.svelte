@@ -18,8 +18,8 @@
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
-			window.scrollTo({
-				top: document.body.scrollHeight,
+			document.querySelector('main').scrollTo({
+				top: chatResponseContainerRef.scrollHeight,
 				left: 0,
 				behavior: 'smooth'
 			});
@@ -168,7 +168,7 @@
 						{#if stream.code !== undefined}
 							<CodeBlock language={stream.language} code={stream.code} />
 						{:else}
-							<p class="my-2">{stream.text}</p>
+							<p class="py-2">{stream.text}</p>
 						{/if}
 					{/each}
 					{#if chatResponse.message}
