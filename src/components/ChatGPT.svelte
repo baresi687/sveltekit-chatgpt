@@ -18,8 +18,8 @@
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
-			window.scrollTo({
-				top: document.body.scrollHeight,
+			document.querySelector('main').scrollTo({
+				top: chatResponseContainerRef.scrollHeight,
 				left: 0,
 				behavior: 'smooth'
 			});
@@ -166,9 +166,9 @@
 				<div class="whitespace-pre-line break-words rounded my-8 p-4 bg-slate-800 text-zinc-200">
 					{#each chatResponse.stream as stream}
 						{#if stream.code !== undefined}
-							<CodeBlock language={stream.language} code={stream.code} />
+							<CodeBlock class="mt-1.5" language={stream.language} code={stream.code} />
 						{:else}
-							<p class="my-2">{stream.text}</p>
+							<p>{stream.text}</p>
 						{/if}
 					{/each}
 					{#if chatResponse.message}
@@ -207,31 +207,34 @@
 			{/if}
 		</div>
 	</div>
-	<div class="fixed bottom-0 z-50 w-full pt-10 pb-14 mt-4 bg-slate-800">
+	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
 		<form on:submit={handleChat} class="relative max-w-3xl mx-auto px-4">
 			<input
 				bind:this={inputRef}
 				bind:value={inputValue}
 				id="chat"
-				class="w-full h-10 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
+				class="w-full h-12 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
 				type="text"
 				placeholder="Send a message"
 				disabled={isLoading || isStreaming}
 			/>
 			{#if isLoading || isStreaming}
-				<div class="absolute top-2.5 right-6 placeholder-circle w-5 animate-pulse" />
+				<div class="absolute top-3 right-6 placeholder-circle w-6 animate-pulse" />
 			{/if}
 			{#if inputValue && !isStreaming && !isLoading}
-				<button on:click={handleChat} class="absolute top-3 right-6">
+				<button
+					on:click={handleChat}
+					class="absolute bg-blue-600 rounded-lg top-1 right-6 w-10 h-10"
+				>
 					<svg
 						aria-label="Submit question"
-						class="pointer-events-none"
+						class="pointer-events-none text-slate-100"
 						xmlns="http://www.w3.org/2000/svg"
-						width="15"
-						height="16"
-						viewBox="0 0 15 16"
+						width="32"
+						height="24"
+						viewBox="0 0 8 16"
 						><path
-							fill="#1d4ed8"
+							fill="currentColor"
 							d="M12.49 7.14L3.44 2.27c-.76-.41-1.64.3-1.4 1.13l1.24 4.34c.05.18.05.36 0 .54l-1.24 4.34c-.24.83.64 1.54 1.4 1.13l9.05-4.87a.98.98 0 0 0 0-1.72Z"
 						/></svg
 					>

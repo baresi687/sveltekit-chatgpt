@@ -2,9 +2,9 @@
 	import ChatGPT from '../components/ChatGPT.svelte';
 </script>
 
-<main>
-	<section class="my-20">
-		<h1 class="text-center text-5xl px-4">Sveltekit ChatGPT</h1>
+<main class="overflow-y-scroll hide-scrollbar">
+	<section>
+		<h1 class="text-center text-5xl px-4 mt-36">SvelteKit ChatGPT</h1>
 		<ChatGPT />
 	</section>
 </main>
