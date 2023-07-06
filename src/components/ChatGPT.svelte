@@ -1,7 +1,6 @@
 <script>
 	import { CodeBlock } from '@skeletonlabs/skeleton';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks.js';
-	import { onMount } from 'svelte';
 
 	let inputValue = '';
 	let chatResponseStream = [];
@@ -13,21 +12,7 @@
 	let errorString = '';
 	let parsedLines = [];
 	let inputRef;
-	let chatResponseContainerRef;
 	const decoder = new TextDecoder('utf-8');
-
-	onMount(() => {
-		const resizeObserver = new ResizeObserver(() => {
-			document.querySelector('main').scrollTo({
-				top: chatResponseContainerRef.scrollHeight,
-				left: 0,
-				behavior: 'smooth'
-			});
-		});
-
-		resizeObserver.observe(chatResponseContainerRef);
-		return () => resizeObserver.unobserve(chatResponseContainerRef);
-	});
 
 	async function getChatResponse(data) {
 		const model = {
@@ -157,16 +142,13 @@
 </script>
 
 <div class=" my-14">
-	<div
-		bind:this={chatResponseContainerRef}
-		class="relative container mx-auto px-4 max-w-3xl pb-[6rem] mb-44"
-	>
+	<div class="relative container mx-auto px-4 max-w-3xl pb-[6rem] mb-44">
 		{#if chatResponses.length > 0}
 			{#each chatResponses as chatResponse}
 				<div class="whitespace-pre-line break-words rounded my-8 p-4 bg-slate-800 text-zinc-200">
 					{#each chatResponse.stream as stream}
 						{#if stream.code !== undefined}
-							<CodeBlock class="mt-1.5" language={stream.language} code={stream.code} />
+							<CodeBlock class="my-1.5" language={stream.language} code={stream.code} />
 						{:else}
 							<p>{stream.text}</p>
 						{/if}

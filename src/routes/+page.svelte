@@ -1,11 +1,38 @@
 <script>
 	import ChatGPT from '../components/ChatGPT.svelte';
+	import { onMount } from 'svelte';
+
+	let mainRef;
+	let chatContainerRef;
+	let scrollPos = 0;
+	let isScroll = true;
+
+	onMount(() => {
+		const resizeObserver = new ResizeObserver(() => {
+			if (isScroll) {
+				mainRef.scrollTo({
+					top: mainRef.scrollHeight,
+					left: 0
+				});
+				scrollPos = mainRef.scrollTop;
+			}
+		});
+
+		resizeObserver.observe(chatContainerRef);
+		return () => resizeObserver.unobserve(mainRef);
+	});
 </script>
 
-<main class="overflow-y-scroll hide-scrollbar">
+<main
+	bind:this={mainRef}
+	on:scroll={() => (isScroll = mainRef.scrollTop >= scrollPos)}
+	class="overflow-y-scroll hide-scrollbar scroll-smooth"
+>
 	<section>
 		<h1 class="text-center text-5xl px-4 mt-36">SvelteKit ChatGPT</h1>
-		<ChatGPT />
+		<div bind:this={chatContainerRef}>
+			<ChatGPT />
+		</div>
 	</section>
 </main>
 <footer class="fixed bottom-5 z-50 bg-slate-800 w-full">
