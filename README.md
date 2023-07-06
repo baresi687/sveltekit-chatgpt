@@ -8,7 +8,7 @@ ChatGPT app built with SvelteKit.
 
 ### Features
 
-- Streaming responses with auto scroll
+- Streaming responses with auto scroll (scroll up to stop, scroll down to continue auto scroll)
 - Remembers previous message
 - Supports code blocks with syntax highlighting
 
@@ -22,8 +22,6 @@ ChatGPT app built with SvelteKit.
 ## To do
 
 - Handle timeout errors mid-stream
-- Investigate and fix if possible, infrequent parse errors
-- Stop auto scroll if user scrolls
 - Improve regex and/or code for catching code blocks
 - Convert to TypeScript
 
