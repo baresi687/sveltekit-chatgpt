@@ -5,10 +5,11 @@
 	let inputValue = '';
 	let chatResponseStream = [];
 	let chatResponses = [];
-	let messageArray = [];
+	let messageArray = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
 	let isError = false;
+	let isLimitReached = false;
 	let errorString = '';
 	let parsedLines = [];
 	let inputRef;
@@ -109,8 +110,14 @@
 					});
 			} else {
 				isError = true;
-				if (response.status === 429) {
-					errorString = 'Too many requests. Please try again later';
+				switch (response.status) {
+					case 429:
+						errorString = 'Too many requests. Please try again later';
+						break;
+					case 400:
+						errorString = 'Maximum limit for message history (tokens) reached.';
+						isLimitReached = true;
+						break;
 				}
 				regainFocus();
 			}
@@ -182,8 +189,15 @@
 		<div class="relative">
 			{#if isError}
 				<div class="absolute left-0 top-0 w-full">
-					<div class="bg-red-900 whitespace-pre-line rounded mb-8 p-4 text-zinc-200">
-						{errorString}
+					<div
+						class="flex gap-4 items-center bg-red-900 whitespace-pre-line rounded mb-8 p-4 text-zinc-200"
+					>
+						<p>{errorString}</p>
+						{#if isLimitReached}
+							<button on:click={() => location.reload()} class="btn btn-sm bg-red-800"
+								>Refresh page</button
+							>
+						{/if}
 					</div>
 				</div>
 			{/if}
