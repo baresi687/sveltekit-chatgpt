@@ -1,34 +1,23 @@
 <script lang="ts">
 	import { CodeBlock } from '@skeletonlabs/skeleton';
+	import type {
+		IChatResponseStream,
+		IChatResponses,
+		IMessageArray,
+		IStreamError
+	} from '../interfaces/types';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
-
-	interface IChatResponseStream {
-		text?: string;
-		code?: string;
-		language?: string;
-		choices?: [];
-		done?: boolean;
-	}
-
-	interface IChatResponses {
-		message?: string;
-		stream: [...IChatResponseStream[]];
-	}
-
-	interface IStreamError {
-		error: { message: string };
-	}
+	import { handleAssistantResponse, handleStreamError, parseLines } from '../utils/functions';
 
 	let inputValue = '';
 	let chatResponseStream: IChatResponseStream[] = [];
 	let chatResponses: IChatResponses[] = [];
-	let messageArray = [{ role: 'system', content: 'You are a helpful assistant.' }];
+	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
 	let isError = false;
 	let isLimitReached = false;
 	let errorString = '';
-	let parsedLines = [];
 	let inputRef: HTMLElement;
 	const decoder = new TextDecoder('utf-8');
 
@@ -60,9 +49,9 @@
 				clearTimeout(timeOut);
 				const reader = await response?.body?.getReader();
 				let isStreamError: IStreamError[] = [];
-				messageArray = [...messageArray, { role: 'user', content: data }];
-				isStreaming = true;
 
+				isStreaming = true;
+				messageArray = [...messageArray, { role: 'user', content: data }];
 				chatResponses = [...chatResponses, { stream: [{}] }];
 
 				if (typeof reader === 'object') {
@@ -71,35 +60,15 @@
 						.then(function processText({ done, value }): unknown {
 							const decodedChunk = decoder.decode(value);
 							const lines = decodedChunk.split('\n');
-							let parsedContent;
+							const parsedLines = parseLines(lines);
+							const parsedContent = parsedLines.filter((line) => line.id || line.done);
 
-							parsedLines = lines
-								.map((line) => line.replace(/^data: /, '').trim())
-								.filter(
-									(line) =>
-										line.startsWith('{"id') || line.startsWith('{"error') || line === '[DONE]'
-								)
-								.map((line) => {
-									if (line.startsWith('{"id') || line.startsWith('{"error')) {
-										return JSON.parse(line);
-									} else {
-										return JSON.parse('{"done": true}');
-									}
-								});
-
-							parsedContent = parsedLines.filter((line) => line.id || line.done);
 							isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
-
 							chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
 							if (isStreamError.length) {
-								chatResponseStream = [
-									...processTextAndCodeBlocks(
-										[{ done: true, choices: [{ delta: { content: '' } }] }],
-										chatResponseStream
-									)
-								];
+								chatResponseStream = handleStreamError(chatResponseStream);
 								isError = true;
 								errorString = isStreamError[0].error.message;
 							}
@@ -108,14 +77,7 @@
 								if (isStreamError.length) {
 									chatResponses = chatResponses.slice(0, -1);
 								} else {
-									const assistantResponse = chatResponseStream
-										.map((item) => item.text || item.code)
-										.join(' ');
-
-									messageArray = [
-										...messageArray,
-										{ role: 'assistant', content: assistantResponse }
-									];
+									messageArray = handleAssistantResponse(chatResponseStream, messageArray);
 									chatResponses[chatResponses.length - 1].message = data;
 									inputValue = '';
 								}
@@ -129,8 +91,8 @@
 							isError = true;
 						})
 						.finally(() => {
-							chatResponseStream = [];
 							isStreaming = false;
+							chatResponseStream = [];
 							regainFocus();
 						});
 				}
