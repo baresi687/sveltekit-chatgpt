@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
 	import ChatGPT from '../components/ChatGPT.svelte';
 	import { onMount } from 'svelte';
 
-	let mainRef;
-	let chatContainerRef;
+	let mainRef: HTMLElement;
+	let chatContainerRef: HTMLElement;
 	let scrollPos = 0;
 	let isScroll = true;
 

@@ -1,21 +1,27 @@
-<script>
+<script lang="ts">
 	import { CodeBlock } from '@skeletonlabs/skeleton';
-	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks.js';
+	import type {
+		IChatResponseStream,
+		IChatResponses,
+		IMessageArray,
+		IStreamError
+	} from '../interfaces/types';
+	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
+	import { handleAssistantResponse, handleStreamError, parseLines } from '../utils/functions';
 
 	let inputValue = '';
-	let chatResponseStream = [];
-	let chatResponses = [];
-	let messageArray = [{ role: 'system', content: 'You are a helpful assistant.' }];
+	let chatResponseStream: IChatResponseStream[] = [];
+	let chatResponses: IChatResponses[] = [];
+	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
 	let isError = false;
 	let isLimitReached = false;
 	let errorString = '';
-	let parsedLines = [];
-	let inputRef;
+	let inputRef: HTMLElement;
 	const decoder = new TextDecoder('utf-8');
 
-	async function getChatResponse(data) {
+	async function getChatResponse(data: string) {
 		const model = {
 			model: 'gpt-3.5-turbo',
 			messages: [...messageArray, { role: 'user', content: data }],
@@ -41,73 +47,55 @@
 
 			if (response.status === 200) {
 				clearTimeout(timeOut);
-				const reader = await response.body.getReader();
-				let isStreamError = [];
-				messageArray = [...messageArray, { role: 'user', content: data }];
+				const reader = await response?.body?.getReader();
+				let isStreamError: IStreamError[] = [];
+
 				isStreaming = true;
+				messageArray = [...messageArray, { role: 'user', content: data }];
+				chatResponses = [...chatResponses, { stream: [{}] }];
 
-				chatResponses = [...chatResponses, { stream: [] }];
+				if (typeof reader === 'object') {
+					reader
+						.read()
+						.then(function processText({ done, value }): unknown {
+							const decodedChunk = decoder.decode(value);
+							const lines = decodedChunk.split('\n');
+							const parsedLines = parseLines(lines);
+							const parsedContent = parsedLines.filter((line) => line.id || line.done);
 
-				reader
-					.read()
-					.then(function processText({ done, value }) {
-						const decodedChunk = decoder.decode(value);
-						const lines = decodedChunk.split('\n');
-						let parsedContent;
+							isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
+							chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
+							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
-						parsedLines = lines
-							.map((line) => line.replace(/^data: /, '').trim())
-							.filter(
-								(line) => line.startsWith('{"id') || line.startsWith('{"error') || line === '[DONE]'
-							)
-							.map((line) => {
-								if (line.startsWith('{"id') || line.startsWith('{"error')) {
-									return JSON.parse(line);
-								} else {
-									return JSON.parse('{"done": true}');
-								}
-							});
-
-						parsedContent = parsedLines.filter((line) => line.id || line.done);
-						isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
-
-						chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
-						chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
-
-						if (isStreamError.length) {
-							chatResponseStream = [
-								...processTextAndCodeBlocks([{ done: true }], chatResponseStream)
-							];
-							isError = true;
-							errorString = isStreamError[0].error.message;
-						}
-
-						if (done) {
 							if (isStreamError.length) {
-								chatResponses = chatResponses.slice(0, -1);
-							} else {
-								const assistantResponse = chatResponseStream
-									.map((item) => item.text || item.code)
-									.join(' ');
-
-								messageArray = [...messageArray, { role: 'assistant', content: assistantResponse }];
-								chatResponses[chatResponses.length - 1].message = data;
-								inputValue = '';
+								chatResponseStream = handleStreamError(chatResponseStream);
+								isError = true;
+								errorString = isStreamError[0].error.message;
 							}
-							return;
-						}
 
-						return reader.read().then(processText);
-					})
-					.catch(() => {
-						chatResponses = chatResponses.slice(0, -1);
-						isError = true;
-					})
-					.finally(() => {
-						chatResponseStream = [];
-						isStreaming = false;
-						regainFocus();
-					});
+							if (done) {
+								if (isStreamError.length) {
+									chatResponses = chatResponses.slice(0, -1);
+								} else {
+									messageArray = handleAssistantResponse(chatResponseStream, messageArray);
+									chatResponses[chatResponses.length - 1].message = data;
+									inputValue = '';
+								}
+								return;
+							}
+
+							return reader.read().then(processText);
+						})
+						.catch(() => {
+							chatResponses = chatResponses.slice(0, -1);
+							isError = true;
+						})
+						.finally(() => {
+							isStreaming = false;
+							chatResponseStream = [];
+							regainFocus();
+						});
+				}
 			} else {
 				isError = true;
 				switch (response.status) {
@@ -121,9 +109,9 @@
 				}
 				regainFocus();
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			isError = true;
-			if (error.name === 'AbortError') {
+			if (error instanceof Error && error.name === 'AbortError') {
 				errorString = 'Request timed out.  Please try again later';
 			}
 			regainFocus();
@@ -132,7 +120,7 @@
 		}
 	}
 
-	function handleChat(e) {
+	function handleChat(e: Event) {
 		e.preventDefault();
 		if (inputValue) {
 			getChatResponse(inputValue).then();
@@ -150,7 +138,7 @@
 
 <div class=" my-14">
 	<div class="relative container mx-auto px-4 max-w-3xl pb-[6rem] mb-44">
-		{#if chatResponses.length > 0}
+		{#if chatResponses?.length > 0}
 			{#each chatResponses as chatResponse}
 				<div class="whitespace-pre-line break-words rounded my-8 p-4 bg-slate-800 text-zinc-200">
 					{#each chatResponse.stream as stream}
