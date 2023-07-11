@@ -6,15 +6,21 @@
 	let chatContainerRef: HTMLElement;
 	let scrollPos = 0;
 	let isScroll = true;
+	let scrollHeight = 0;
+
+	function handleScroll() {
+		isScroll = mainRef.scrollTop >= scrollPos;
+		scrollPos = mainRef.scrollTop;
+	}
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
-			if (isScroll) {
+			if (isScroll && mainRef.scrollHeight - scrollHeight >= 40) {
 				mainRef.scrollTo({
 					top: mainRef.scrollHeight,
 					left: 0
 				});
-				scrollPos = mainRef.scrollTop;
+				scrollHeight = mainRef.scrollHeight;
 			}
 		});
 
@@ -25,7 +31,7 @@
 
 <main
 	bind:this={mainRef}
-	on:scroll={() => (isScroll = mainRef.scrollTop >= scrollPos)}
+	on:scroll={handleScroll}
 	class="overflow-y-scroll hide-scrollbar scroll-smooth"
 >
 	<section>
