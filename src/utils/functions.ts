@@ -1,5 +1,6 @@
 import { processTextAndCodeBlocks } from './processTextAndCodeBlocks';
 import type { IChatResponseStream, IMessageArray } from '../interfaces/types';
+import type { IArr } from './processTextAndCodeBlocks';
 
 function parseLines(arr: Array<string>) {
 	return arr
@@ -12,6 +13,10 @@ function parseLines(arr: Array<string>) {
 				return JSON.parse('{"done": true}');
 			}
 		});
+}
+
+function findIndex(arr: IArr[], ref: string) {
+	return arr.findIndex((item) => item[ref as keyof IArr]);
 }
 
 function handleAssistantResponse(
@@ -28,4 +33,4 @@ function handleStreamError(arr: IChatResponseStream[]) {
 	];
 }
 
-export { parseLines, handleAssistantResponse, handleStreamError };
+export { parseLines, findIndex, handleAssistantResponse, handleStreamError };
