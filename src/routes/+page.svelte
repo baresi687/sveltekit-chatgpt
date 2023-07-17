@@ -8,13 +8,10 @@
 	let isScroll = true;
 	let scrollHeight = 0;
 
-	function handleScroll() {
-		isScroll = mainRef.scrollTop >= scrollPos;
-		scrollPos = mainRef.scrollTop;
-	}
-
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
+			scrollPos = mainRef.scrollTop;
+
 			if (isScroll && mainRef.scrollHeight - scrollHeight >= 40) {
 				mainRef.scrollTo({
 					top: mainRef.scrollHeight,
@@ -31,7 +28,7 @@
 
 <main
 	bind:this={mainRef}
-	on:scroll={handleScroll}
+	on:scroll={() => (isScroll = mainRef.scrollTop >= scrollPos)}
 	class="overflow-y-scroll hide-scrollbar scroll-smooth"
 >
 	<section>

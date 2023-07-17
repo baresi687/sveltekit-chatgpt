@@ -68,26 +68,23 @@
 							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
 							if (isStreamError.length) {
-								chatResponseStream = handleStreamError(chatResponseStream);
-								isError = true;
-								errorString = isStreamError[0].error.message;
+								throw Error(isStreamError[0].error.message);
 							}
 
 							if (done) {
-								if (isStreamError.length) {
-									chatResponses = chatResponses.slice(0, -1);
-								} else {
-									messageArray = handleAssistantResponse(chatResponseStream, messageArray);
-									chatResponses[chatResponses.length - 1].message = data;
-									inputValue = '';
-								}
+								messageArray = handleAssistantResponse(chatResponseStream, messageArray);
+								chatResponses[chatResponses.length - 1].message = data;
+								inputValue = '';
 								return;
 							}
 
 							return reader.read().then(processText);
 						})
-						.catch(() => {
+						.catch((e) => {
+							chatResponseStream = handleStreamError(chatResponseStream);
 							chatResponses = chatResponses.slice(0, -1);
+							messageArray = messageArray.slice(0, -1);
+							errorString = isStreamError.length ? e.message : errorString;
 							isError = true;
 						})
 						.finally(() => {
