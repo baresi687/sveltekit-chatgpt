@@ -21,7 +21,6 @@ ChatGPT app built with SvelteKit.
 
 ## To do
 
-- Handle timeout errors mid-stream
 - Improve regex and/or code for catching code blocks
 - Improve on TypeScript code
 
@@ -52,6 +51,23 @@ To run the app, run the following commands:
 ```bash
 npm run build
 npm run preview
+```
+
+### Testing
+
+**Unit tests**
+
+The *processTextAndCodeblocks* function has the following tests:
+
+- Return array with text object and property text
+- Return array with text object and property text updated
+- Return array with code object and property code updated
+- Return array with text and code objects
+
+To run the unit tests:
+
+```bash
+npm run test
 ```
 
 ## Deployed site
