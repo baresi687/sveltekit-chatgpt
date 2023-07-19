@@ -10,14 +10,13 @@
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
-			scrollPos = mainRef.scrollTop;
+			const isDesktop = window.innerWidth >= 958;
+			const isMobile = mainRef.scrollHeight - scrollHeight >= 50;
 
-			if (isScroll && mainRef.scrollHeight - scrollHeight >= 40) {
-				mainRef.scrollTo({
-					top: mainRef.scrollHeight,
-					left: 0
-				});
+			if (isScroll && (isDesktop || isMobile)) {
+				mainRef.scrollTo({ top: mainRef.scrollHeight, left: 0 });
 				scrollHeight = mainRef.scrollHeight;
+				scrollPos = mainRef.scrollTop;
 			}
 		});
 
