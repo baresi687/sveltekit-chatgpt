@@ -20,4 +20,15 @@ interface IStreamError {
 	error: { message: string };
 }
 
-export type { IChatResponseStream, IChatResponses, IMessageArray, IStreamError };
+interface IStream {
+	choices: [{ delta: { content: string } }];
+	done?: boolean;
+}
+
+interface IArr {
+	code?: string;
+	text?: string;
+	language?: string;
+}
+
+export type { IChatResponseStream, IChatResponses, IMessageArray, IStreamError, IStream, IArr };

@@ -1,6 +1,5 @@
 import { processTextAndCodeBlocks } from './processTextAndCodeBlocks';
-import type { IChatResponseStream, IMessageArray } from '../interfaces/types';
-import type { IArr } from './processTextAndCodeBlocks';
+import type { IChatResponseStream, IMessageArray, IArr } from '../interfaces/types';
 
 function parseLines(arr: Array<string>) {
 	return arr

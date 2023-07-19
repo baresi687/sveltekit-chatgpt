@@ -1,20 +1,11 @@
 import { findIndex } from './functions';
+import type { IStream, IArr } from '../interfaces/types';
 
 let isCode = false;
 let codeBlockRef = '';
 let textBlockRef = '';
 let streamString = '';
 
-interface IStream {
-	choices: [{ delta: { content: string } }];
-	done: boolean;
-}
-
-interface IArr {
-	code?: string;
-	text?: string;
-	language?: string;
-}
 export function processTextAndCodeBlocks(stream: IStream[], arr: IArr[]) {
 	for (const elem of stream) {
 		const { choices, done } = elem;
@@ -80,9 +71,10 @@ export function processTextAndCodeBlocks(stream: IStream[], arr: IArr[]) {
 		}
 		if (done) {
 			streamString = '';
+			isCode = false;
 		}
 	}
 	return arr;
 }
 
-export type { IArr };
+export { isCode, codeBlockRef, textBlockRef, streamString };
