@@ -226,22 +226,23 @@
 				bind:this={inputRef}
 				bind:value={inputValue}
 				id="chat"
-				class="w-full h-12 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
+				class="w-full h-12 indent-4 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
 				type="text"
 				placeholder="Send a message"
 				disabled={isLoading || isStreaming}
 			/>
 			{#if isLoading || isStreaming}
-				<div class="absolute top-3 right-6 placeholder-circle w-6 animate-pulse" />
+				<div class="absolute top-3 right-8 placeholder-circle w-6 animate-pulse" />
 			{/if}
-			{#if inputValue && !isStreaming && !isLoading}
+			{#if !isLoading && !isStreaming}
 				<button
 					on:click={handleChat}
-					class="absolute bg-blue-600 rounded-lg top-1 right-6 w-10 h-10"
+					class="ease-in-out duration-200 absolute bg-blue-700 rounded-lg top-1 right-6 w-10 h-10 disabled:bg-white"
+					disabled={!inputValue}
 				>
 					<svg
 						aria-label="Submit question"
-						class="pointer-events-none text-slate-100"
+						class={`pointer-events-none text-slate-100 ${!inputValue && 'text-slate-600'}`}
 						xmlns="http://www.w3.org/2000/svg"
 						width="32"
 						height="24"
