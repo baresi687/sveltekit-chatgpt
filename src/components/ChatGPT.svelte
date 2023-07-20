@@ -15,6 +15,7 @@
 	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
+	let hasStreamBeenCancelled = false;
 	let isError = false;
 	let isLimitReached = false;
 	let errorString = '';
@@ -67,6 +68,10 @@
 							chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
+							if (hasStreamBeenCancelled) {
+								reader.cancel();
+							}
+
 							if (isStreamError.length) {
 								throw Error(isStreamError[0].error.message);
 							}
@@ -89,6 +94,7 @@
 						})
 						.finally(() => {
 							isStreaming = false;
+							hasStreamBeenCancelled = false;
 							chatResponseStream = [];
 							regainFocus();
 						});
@@ -188,6 +194,26 @@
 			{/if}
 		</div>
 	</div>
+	{#if isStreaming}
+		<div id="stop-generating" class="fixed bottom-40 flex justify-center w-full">
+			<button
+				on:click={() => (hasStreamBeenCancelled = true)}
+				class="btn bg-slate-900 border-2 border-slate-800"
+			>
+				<span class="pointer-events-none"
+					><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16"
+						><path
+							fill="currentColor"
+							fill-rule="evenodd"
+							d="M12.035 13.096a6.5 6.5 0 0 1-9.131-9.131l9.131 9.131Zm1.061-1.06L3.965 2.903a6.5 6.5 0 0 1 9.131 9.131ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Z"
+							clip-rule="evenodd"
+						/></svg
+					></span
+				>
+				<span class="pointer-events-none">Stop generating</span>
+			</button>
+		</div>
+	{/if}
 	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
 		<form on:submit={handleChat} class="relative max-w-3xl mx-auto px-4">
 			<input
