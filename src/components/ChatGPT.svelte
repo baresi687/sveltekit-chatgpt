@@ -15,6 +15,7 @@
 	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
+	let isStreamingOverOneSecond = false;
 	let hasStreamBeenCancelled = false;
 	let isError = false;
 	let isLimitReached = false;
@@ -31,6 +32,7 @@
 
 		try {
 			isLoading = true;
+			isStreamingOverOneSecond = false;
 			isError = false;
 			errorString = 'Something went wrong.. Please try again later';
 
@@ -54,6 +56,10 @@
 				isStreaming = true;
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				chatResponses = [...chatResponses, { stream: [{}] }];
+
+				setTimeout(() => {
+					isStreamingOverOneSecond = true;
+				}, 1500);
 
 				if (typeof reader === 'object') {
 					reader
@@ -194,7 +200,7 @@
 			{/if}
 		</div>
 	</div>
-	{#if isStreaming}
+	{#if isStreaming && isStreamingOverOneSecond}
 		<div id="stop-generating" class="fixed bottom-40 flex justify-center w-full">
 			<button
 				on:click={() => (hasStreamBeenCancelled = true)}
