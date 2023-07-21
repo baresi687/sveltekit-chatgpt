@@ -15,6 +15,7 @@
 	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
+	let isStreamingOverOneSecond = false;
 	let hasStreamBeenCancelled = false;
 	let isError = false;
 	let isLimitReached = false;
@@ -31,6 +32,7 @@
 
 		try {
 			isLoading = true;
+			isStreamingOverOneSecond = false;
 			isError = false;
 			errorString = 'Something went wrong.. Please try again later';
 
@@ -54,6 +56,10 @@
 				isStreaming = true;
 				messageArray = [...messageArray, { role: 'user', content: data }];
 				chatResponses = [...chatResponses, { stream: [{}] }];
+
+				setTimeout(() => {
+					isStreamingOverOneSecond = true;
+				}, 1500);
 
 				if (typeof reader === 'object') {
 					reader
@@ -125,8 +131,8 @@
 
 	function handleChat(e: Event) {
 		e.preventDefault();
-		if (inputValue) {
-			getChatResponse(inputValue).then();
+		if (inputValue.trim()) {
+			getChatResponse(inputValue.trim()).then();
 		}
 	}
 
@@ -165,12 +171,12 @@
 			>
 				<div class="animate-pulse flex space-x-4">
 					<div class="flex-1 space-y-6 pb-4">
-						<div class="h-2 bg-slate-700 rounded" />
-						<div class="h-2 bg-slate-700 rounded" />
+						<div class="h-2 bg-slate-700 rounded"></div>
+						<div class="h-2 bg-slate-700 rounded"></div>
 						<div class="space-y-3">
 							<div class="grid grid-cols-3 gap-4">
-								<div class="h-2 bg-slate-700 rounded col-span-2" />
-								<div class="h-2 bg-slate-700 rounded col-span-1" />
+								<div class="h-2 bg-slate-700 rounded col-span-2"></div>
+								<div class="h-2 bg-slate-700 rounded col-span-1"></div>
 							</div>
 						</div>
 					</div>
@@ -194,7 +200,7 @@
 			{/if}
 		</div>
 	</div>
-	{#if isStreaming}
+	{#if isStreaming && isStreamingOverOneSecond}
 		<div id="stop-generating" class="fixed bottom-40 flex justify-center w-full">
 			<button
 				on:click={() => (hasStreamBeenCancelled = true)}
@@ -216,26 +222,30 @@
 	{/if}
 	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
 		<form on:submit={handleChat} class="relative max-w-3xl mx-auto px-4">
-			<input
-				bind:this={inputRef}
-				bind:value={inputValue}
-				id="chat"
-				class="w-full h-12 indent-2.5 rounded text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 disabled:bg-gray-400"
-				type="text"
-				placeholder="Send a message"
-				disabled={isLoading || isStreaming}
-			/>
-			{#if isLoading || isStreaming}
-				<div class="absolute top-3 right-6 placeholder-circle w-6 animate-pulse" />
-			{/if}
-			{#if inputValue && !isStreaming && !isLoading}
+			<label class={`flex p-3 rounded ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-white'}`}>
+				<textarea
+					bind:this={inputRef}
+					bind:value={inputValue}
+					on:keydown={(e) => (e.key === 'Enter' ? handleChat(e) : null)}
+					name="message-input"
+					id="message-input"
+					rows="1"
+					aria-label="Send a message"
+					class="hide-scrollbar resize-none focus:outline-none pr-12 bg-inherit w-full text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600"
+					placeholder="Send a message"
+					disabled={isLoading || isStreaming}
+				></textarea>
+			</label>
+			{#if !isLoading && !isStreaming}
 				<button
-					on:click={handleChat}
-					class="absolute bg-blue-600 rounded-lg top-1 right-6 w-10 h-10"
+					class="ease-in-out duration-200 absolute bg-blue-700 rounded-lg top-1 right-6 w-10 h-10 disabled:bg-white"
+					disabled={!inputValue.trim()}
 				>
 					<svg
-						aria-label="Submit question"
-						class="pointer-events-none text-slate-100"
+						aria-label="Submit message"
+						class={`pointer-events-none ${
+							!inputValue.trim() ? 'text-slate-600' : 'text-slate-100'
+						}`}
 						xmlns="http://www.w3.org/2000/svg"
 						width="32"
 						height="24"
@@ -246,6 +256,9 @@
 						/></svg
 					>
 				</button>
+			{/if}
+			{#if isLoading || isStreaming}
+				<div class="absolute top-3 right-8 placeholder-circle w-6 animate-pulse"></div>
 			{/if}
 		</form>
 	</div>
