@@ -26,10 +26,10 @@ function handleAssistantResponse(
 	return [...messageArray, { role: 'assistant', content: assistantResponse }];
 }
 
-function handleStreamError(arr: IChatResponseStream[]) {
+function handleStreamAborted(arr: IChatResponseStream[]) {
 	return [
 		...processTextAndCodeBlocks([{ done: true, choices: [{ delta: { content: '' } }] }], arr)
 	];
 }
 
-export { parseLines, findIndex, handleAssistantResponse, handleStreamError };
+export { parseLines, findIndex, handleAssistantResponse, handleStreamAborted };
