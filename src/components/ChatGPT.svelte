@@ -224,18 +224,17 @@
 	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
 		<form on:submit={handleChat} class="relative max-w-3xl mx-auto px-4">
 			<label class={`flex p-3 rounded ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-white'}`}>
-				<textarea
+				<input
 					bind:this={inputRef}
 					bind:value={inputValue}
 					on:keydown={(e) => (e.key === 'Enter' ? handleChat(e) : null)}
 					name="message-input"
 					id="message-input"
-					rows="1"
 					aria-label="Send a message"
-					class="hide-scrollbar resize-none focus:outline-none pr-12 bg-inherit w-full text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600"
+					class="w-full pr-14 text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 focus:outline-none"
 					placeholder="Send a message"
 					disabled={isLoading || isStreaming}
-				></textarea>
+				/>
 			</label>
 			{#if !isLoading && !isStreaming}
 				<button
