@@ -7,7 +7,7 @@
 		IStreamError
 	} from '../interfaces/types';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
-	import { handleAssistantResponse, handleStreamError, parseLines } from '../utils/functions';
+	import { handleAssistantResponse, handleStreamAborted, parseLines } from '../utils/functions';
 
 	let inputValue = '';
 	let chatResponseStream: IChatResponseStream[] = [];
@@ -75,6 +75,7 @@
 							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
 							if (hasStreamBeenCancelled) {
+								chatResponseStream = handleStreamAborted(chatResponseStream);
 								reader.cancel();
 							}
 
@@ -92,7 +93,7 @@
 							return reader.read().then(processText);
 						})
 						.catch((e) => {
-							chatResponseStream = handleStreamError(chatResponseStream);
+							chatResponseStream = handleStreamAborted(chatResponseStream);
 							chatResponses = chatResponses.slice(0, -1);
 							messageArray = messageArray.slice(0, -1);
 							errorString = isStreamError.length ? e.message : errorString;
