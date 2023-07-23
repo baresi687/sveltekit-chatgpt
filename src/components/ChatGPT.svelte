@@ -8,6 +8,7 @@
 	} from '../interfaces/types';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
 	import { handleAssistantResponse, handleStreamAborted, parseLines } from '../utils/functions';
+	import { onMount } from 'svelte';
 
 	let inputValue = '';
 	let chatResponseStream: IChatResponseStream[] = [];
@@ -144,6 +145,10 @@
 			}, 1);
 		}
 	}
+
+	onMount(() => {
+		inputRef.focus();
+	});
 </script>
 
 <div class=" my-14">
