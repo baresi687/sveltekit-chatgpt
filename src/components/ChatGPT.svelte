@@ -8,6 +8,7 @@
 	} from '../interfaces/types';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
 	import { handleAssistantResponse, handleStreamAborted, parseLines } from '../utils/functions';
+	import { onMount } from 'svelte';
 
 	let inputValue = '';
 	let chatResponseStream: IChatResponseStream[] = [];
@@ -50,7 +51,7 @@
 
 			if (response.status === 200) {
 				clearTimeout(timeOut);
-				const reader = await response?.body?.getReader();
+				const reader = response?.body?.getReader();
 				let isStreamError: IStreamError[] = [];
 
 				isStreaming = true;
@@ -144,6 +145,10 @@
 			}, 1);
 		}
 	}
+
+	onMount(() => {
+		inputRef.focus();
+	});
 </script>
 
 <div class=" my-14">
@@ -154,8 +159,16 @@
 					{#each chatResponse.stream as stream}
 						{#if stream.code !== undefined}
 							<CodeBlock class="my-1.5" language={stream.language} code={stream.code} />
+							{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
+								<span class="blinking-cursor"></span>
+							{/if}
 						{:else}
-							<p>{stream.text}</p>
+							<p>
+								{stream.text}
+								{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
+									<span class="blinking-cursor -ml-0.5"></span>
+								{/if}
+							</p>
 						{/if}
 					{/each}
 					{#if chatResponse.message}

@@ -39,3 +39,24 @@
 		-webkit-box-shadow: 0 0 0px 1000px #9ca3af inset;
 	}
 }
+
+@layer components {
+	.blinking-cursor {
+		display: inline-block;
+		background-color: white;
+		height: 1.3rem;
+		width: 0.5rem;
+		margin-bottom: -6px;
+		animation: blink-animation 1s steps(2, start) infinite;
+	}
+
+	@keyframes blink-animation {
+		from {
+			visibility: visible;
+		}
+
+		to {
+			visibility: hidden;
+		}
+	}
+}
