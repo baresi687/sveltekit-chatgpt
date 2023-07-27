@@ -70,6 +70,7 @@ export function processTextAndCodeBlocks(stream: IStream[], arr: IArr[]) {
 			arr = [...arr.filter((item) => item.text !== '```')];
 		}
 		if (done) {
+			arr.push({ clipBoard: streamString });
 			streamString = '';
 			isCode = false;
 		}
