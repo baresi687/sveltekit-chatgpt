@@ -3,11 +3,13 @@ interface IChatResponseStream {
 	code?: string;
 	language?: string;
 	choices?: [];
+	clipBoard?: string;
 	done?: boolean;
 }
 
 interface IChatResponses {
 	message?: string;
+	clipBoard?: string;
 	stream: [...IChatResponseStream[]];
 }
 
@@ -29,6 +31,7 @@ interface IArr {
 	code?: string;
 	text?: string;
 	language?: string;
+	clipBoard?: string;
 }
 
 export type { IChatResponseStream, IChatResponses, IMessageArray, IStreamError, IStream, IArr };

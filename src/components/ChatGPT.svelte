@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CodeBlock } from '@skeletonlabs/skeleton';
+	import { CodeBlock, clipboard } from '@skeletonlabs/skeleton';
 	import type {
 		IChatResponseStream,
 		IChatResponses,
@@ -22,6 +22,7 @@
 	let isLimitReached = false;
 	let errorString = '';
 	let inputRef: HTMLElement;
+	let clipBoardBooleans: boolean[] = [];
 	const decoder = new TextDecoder('utf-8');
 
 	async function getChatResponse(data: string) {
@@ -85,8 +86,13 @@
 							}
 
 							if (done) {
+								const chatResponse = chatResponses[chatResponses.length - 1];
+								const clipBoard = chatResponseStream.filter((item) => item.clipBoard)[0].clipBoard;
+
+								chatResponse.message = data;
+								chatResponse.clipBoard = clipBoard;
+								clipBoardBooleans = [...clipBoardBooleans, false];
 								messageArray = handleAssistantResponse(chatResponseStream, messageArray);
-								chatResponses[chatResponses.length - 1].message = data;
 								inputValue = '';
 								return;
 							}
@@ -146,6 +152,13 @@
 		}
 	}
 
+	function handleClipBoardClick(index: number) {
+		clipBoardBooleans[index] = true;
+		setTimeout(() => {
+			clipBoardBooleans[index] = false;
+		}, 1000);
+	}
+
 	onMount(() => {
 		inputRef.focus();
 	});
@@ -162,7 +175,7 @@
 							{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
 								<span class="blinking-cursor"></span>
 							{/if}
-						{:else}
+						{:else if stream.text}
 							<p>
 								{stream.text}
 								{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
@@ -171,9 +184,32 @@
 							</p>
 						{/if}
 					{/each}
-					{#if chatResponse.message}
-						<div class="text-sm mt-3 bg-slate-900 p-2 rounded w-fit">
-							Your message: <span class="font-semibold">{chatResponse.message}</span>
+					{#if chatResponse.message && chatResponse.clipBoard}
+						<div class="flex justify-between gap-8 mt-3">
+							<div class="text-sm bg-slate-900 p-2 rounded w-fit">
+								Your message: <span class="font-semibold">{chatResponse.message}</span>
+							</div>
+							<button
+								class="ease-in duration-100 flex justify-center items-center shrink-0 rounded w-10 h-9 mt-auto border border-slate-600 hover:bg-slate-900 hover:border-slate-900"
+								aria-label="Copy text"
+								use:clipboard={chatResponse.clipBoard}
+								on:click={() => handleClipBoardClick(chatResponses.indexOf(chatResponse))}
+								>{#if clipBoardBooleans[chatResponses.indexOf(chatResponse)]}
+									👍
+								{:else}
+									<svg
+										class="pointer-events-none"
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 256 256"
+										><path
+											fill="#94a3b8"
+											d="M216 36H88a4 4 0 0 0-4 4v44H40a4 4 0 0 0-4 4v128a4 4 0 0 0 4 4h128a4 4 0 0 0 4-4v-44h44a4 4 0 0 0 4-4V40a4 4 0 0 0-4-4Zm-52 176H44V92h120Zm48-48h-40V88a4 4 0 0 0-4-4H92V44h120Z"
+										/></svg
+									>
+								{/if}
+							</button>
 						</div>
 					{/if}
 				</div>
