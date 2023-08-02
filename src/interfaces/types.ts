@@ -8,7 +8,6 @@ interface IChatResponseStream {
 }
 
 interface IChatResponses {
-	message?: string;
 	clipBoard?: string;
 	stream: [...IChatResponseStream[]];
 }
