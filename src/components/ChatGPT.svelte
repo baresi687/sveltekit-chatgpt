@@ -173,7 +173,7 @@
 </script>
 
 <div class=" my-14">
-	<div class="relative container mx-auto px-4 max-w-[832px] pb-24 mb-52">
+	<div class="relative container mx-auto px-4 max-w-[800px] pb-24 mb-52">
 		{#each chatResponses as chatResponse}
 			{#if userMessageArray.length}
 				<div
@@ -322,7 +322,7 @@
 		</div>
 	{/if}
 	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
-		<form on:submit={handleChat} class="relative max-w-[832px] mx-auto px-4">
+		<form on:submit={handleChat} class="relative max-w-[800px] mx-auto px-4">
 			<label class={`flex p-3 rounded ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-white'}`}>
 				<input
 					bind:this={inputRef}
