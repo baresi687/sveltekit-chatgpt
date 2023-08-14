@@ -57,6 +57,7 @@
 				clearTimeout(timeOut);
 				const reader = response?.body?.getReader();
 				let isStreamError: IStreamError[] = [];
+				let restChunk = '';
 
 				isStreaming = true;
 				messageArray = [...messageArray, { role: 'user', content: data }];
@@ -69,12 +70,22 @@
 					reader
 						.read()
 						.then(function processText({ done, value }): unknown {
-							const decodedChunk = decoder.decode(value);
-							const lines = decodedChunk.split('\n');
-							const parsedLines = parseLines(lines);
-							const parsedContent = parsedLines.filter((line) => line.id || line.done);
+							const decodedChunk = decoder.decode(value).trim();
+							const isRestChunk = !decodedChunk.endsWith('}]}') && !decodedChunk.endsWith('[DONE');
+							let lines = decodedChunk.split('\n');
 
-							isStreamError = [...isStreamError, ...parsedLines.filter((line) => line.error)];
+							lines[0] = restChunk ? restChunk + lines[0] : lines[0];
+							lines = lines.filter((line) => line);
+							restChunk = decodedChunk.endsWith('}]}') ? '' : restChunk;
+
+							if (decodedChunk && isRestChunk && lines[lines.length - 1].length < 204) {
+								restChunk = lines[lines.length - 1];
+								lines = lines.slice(0, -1);
+							}
+
+							const parsedContent = parseLines(lines).filter((line) => line.id || line.done);
+
+							isStreamError = [...isStreamError, ...parseLines(lines).filter((line) => line.error)];
 							chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
 							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
 
@@ -111,6 +122,7 @@
 							isStreaming = false;
 							hasStreamBeenCancelled = false;
 							chatResponseStream = [];
+							restChunk = '';
 							regainFocus();
 						});
 				}
