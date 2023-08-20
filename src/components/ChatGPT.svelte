@@ -24,6 +24,7 @@
 	let errorString = '';
 	let inputRef: HTMLElement;
 	let clipBoardBooleans: boolean[] = [];
+	const emphasisedText = /(`[^`]*`|\s)/g;
 	const decoder = new TextDecoder('utf-8');
 
 	async function getChatResponse(data: string) {
@@ -231,7 +232,7 @@
 							{#each chatResponse.stream as stream}
 								{#if stream.code !== undefined}
 									<CodeBlock
-										class="overflow-x-auto my-1"
+										class="overflow-x-auto my-1.5"
 										rounded="rounded"
 										language={stream.language}
 										code={stream.code}
@@ -241,7 +242,13 @@
 									{/if}
 								{:else if stream.text}
 									<p>
-										{stream.text}
+										{#each stream.text.split(emphasisedText) as text}
+											{#if text.match(/`[\s\S]*`$/g)}
+												<span class="font-semibold italic">{text}</span>
+											{:else}
+												{text}
+											{/if}
+										{/each}
 										{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
 											<span class="blinking-cursor -ml-0.5"></span>
 										{/if}
