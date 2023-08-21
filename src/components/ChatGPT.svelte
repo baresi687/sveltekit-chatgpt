@@ -244,7 +244,7 @@
 									<p>
 										{#each stream.text.split(emphasisedText) as text}
 											{#if text.match(/`[\s\S]*`$/g)}
-												<span class="font-semibold italic">{text}</span>
+												<span class="text-zinc-50 font-semibold italic">{text}</span>
 											{:else}
 												{text}
 											{/if}
