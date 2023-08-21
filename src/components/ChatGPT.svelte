@@ -226,7 +226,7 @@
 						>
 						<div
 							class={`overflow-x-auto mt-1 mb-1.5 w-full md:mr-12 ${
-								chatResponse.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-2' : ''
+								chatResponse.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-3.5' : ''
 							}`}
 						>
 							{#each chatResponse.stream as stream}
@@ -238,7 +238,7 @@
 										code={stream.code}
 									/>
 									{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
-										<span class="blinking-cursor"></span>
+										<span class="mt-4 blinking-cursor"></span>
 									{/if}
 								{:else if stream.text}
 									<p>
