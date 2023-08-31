@@ -225,7 +225,7 @@
 							/></svg
 						>
 						<div
-							class={`overflow-x-auto mt-1 mb-1.5 w-full md:mr-12 ${
+							class={`overflow-x-auto overflow-y-hidden mt-1 mb-1.5 w-full md:mr-12 ${
 								chatResponse.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-3.5' : ''
 							}`}
 						>
