@@ -42,8 +42,8 @@ npm install
 ```
 
 3. Sign up with [OpenAI](https://platform.openai.com/account/api-keys) and create an API key.
-- Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY**
 
+- Create a file called **.env.production** in project root with the contents of **VITE_CHATGPT_KEY=YOUR_API_KEY**
 
 ### Running
 
@@ -58,7 +58,7 @@ npm run preview
 
 **Unit tests**
 
-The *processTextAndCodeblocks* function has the following tests:
+The _processTextAndCodeblocks_ function has the following tests:
 
 - Return array with text object and property text
 - Return array with text object and property text updated

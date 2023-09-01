@@ -186,10 +186,10 @@
 </script>
 
 <div class="my-14">
-	<div class="relative container mx-auto px-4 max-w-[800px] pb-24 mb-52">
+	<div class="container relative mx-auto mb-52 max-w-[800px] px-4 pb-24">
 		{#each chatResponses as chatResponse}
 			{#if userMessageArray.length}
-				<div class="whitespace-pre-line break-words rounded px-4 py-6 bg-skeletonDark">
+				<div class="whitespace-pre-line break-words rounded bg-skeletonDark px-4 py-6">
 					<div class="flex items-start gap-4">
 						<svg
 							class="pointer-events-none shrink-0"
@@ -207,7 +207,7 @@
 				</div>
 			{/if}
 			{#if chatResponse.stream.filter((item) => item.text || item.code).length}
-				<div class="whitespace-pre-line break-words rounded p-4 bg-slate-800 relative">
+				<div class="relative whitespace-pre-line break-words rounded bg-slate-800 p-4">
 					<div class="flex items-start gap-4">
 						<svg
 							class="pointer-events-none shrink-0"
@@ -221,26 +221,26 @@
 							/></svg
 						>
 						<div
-							class={`overflow-x-auto overflow-y-hidden mt-1 mb-1.5 w-full md:mr-12 ${
+							class={`mb-1.5 mt-1 w-full overflow-x-auto overflow-y-hidden md:mr-12 ${
 								chatResponse.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-3.5' : ''
 							}`}
 						>
 							{#each chatResponse.stream as stream}
 								{#if stream.code !== undefined}
 									<CodeBlock
-										class="overflow-x-auto my-1.5"
+										class="my-1.5 overflow-x-auto"
 										rounded="rounded"
 										language={stream.language}
 										code={stream.code}
 									/>
 									{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
-										<span class="mt-4 blinking-cursor"></span>
+										<span class="blinking-cursor mt-4"></span>
 									{/if}
 								{:else if stream.text}
 									<p>
 										{#each stream.text.split(emphasisedText) as text}
 											{#if text.match(/`[\s\S]*`$/g)}
-												<span class="text-zinc-50 font-semibold italic">{text}</span>
+												<span class="font-semibold italic text-zinc-50">{text}</span>
 											{:else}
 												{text}
 											{/if}
@@ -255,7 +255,7 @@
 					</div>
 					{#if chatResponse.clipBoard}
 						<button
-							class="ml-auto mt-2 md:absolute bottom-4 right-4 ease-in duration-100 flex justify-center items-center shrink-0 rounded w-10 h-10 md:w-8 md:h-8 border border-slate-600 hover:bg-slate-900 hover:border-slate-900"
+							class="bottom-4 right-4 ml-auto mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-600 duration-100 ease-in hover:border-slate-900 hover:bg-slate-900 md:absolute md:h-8 md:w-8"
 							aria-label="Copy text"
 							use:clipboard={chatResponse.clipBoard}
 							on:click={() => handleClipBoardClick(chatResponses.indexOf(chatResponse))}
@@ -281,16 +281,16 @@
 		{/each}
 		{#if isLoading}
 			<div
-				class="absolute bottom-2 left-0 bg-transparent z-10 shadow rounded-md w-full mx-auto px-4"
+				class="absolute bottom-2 left-0 z-10 mx-auto w-full rounded-md bg-transparent px-4 shadow"
 			>
-				<div class="animate-pulse flex space-x-4">
+				<div class="flex animate-pulse space-x-4">
 					<div class="flex-1 space-y-6 pb-4">
-						<div class="h-2 bg-slate-700 rounded"></div>
-						<div class="h-2 bg-slate-700 rounded"></div>
+						<div class="h-2 rounded bg-slate-700"></div>
+						<div class="h-2 rounded bg-slate-700"></div>
 						<div class="space-y-3">
 							<div class="grid grid-cols-3 gap-4">
-								<div class="h-2 bg-slate-700 rounded col-span-2"></div>
-								<div class="h-2 bg-slate-700 rounded col-span-1"></div>
+								<div class="col-span-2 h-2 rounded bg-slate-700"></div>
+								<div class="col-span-1 h-2 rounded bg-slate-700"></div>
 							</div>
 						</div>
 					</div>
@@ -300,7 +300,7 @@
 		<div class="relative">
 			{#if isError}
 				<div class="absolute left-0 top-0 w-full">
-					<div class="flex gap-4 items-center bg-red-900 whitespace-pre-line rounded mt-6 p-4">
+					<div class="mt-6 flex items-center gap-4 whitespace-pre-line rounded bg-red-900 p-4">
 						<svg
 							class="pointer-events-none shrink-0 self-start"
 							xmlns="http://www.w3.org/2000/svg"
@@ -324,10 +324,10 @@
 		</div>
 	</div>
 	{#if isStreaming && isStreamingOverOneSecond}
-		<div id="stop-generating" class="fixed bottom-40 flex justify-center w-full">
+		<div id="stop-generating" class="fixed bottom-40 flex w-full justify-center">
 			<button
 				on:click={() => (hasStreamBeenCancelled = true)}
-				class="btn bg-slate-900 border-2 border-slate-800"
+				class="btn border-2 border-slate-800 bg-slate-900"
 			>
 				<span class="pointer-events-none"
 					><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16"
@@ -343,9 +343,9 @@
 			</button>
 		</div>
 	{/if}
-	<div class="fixed bottom-0 z-50 w-full pt-8 pb-14 mt-4 bg-slate-800">
-		<form on:submit={handleChat} class="relative max-w-[800px] mx-auto px-4">
-			<label class={`flex p-3 rounded ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-slate-50'}`}>
+	<div class="fixed bottom-0 z-50 mt-4 w-full bg-slate-800 pb-14 pt-8">
+		<form on:submit={handleChat} class="relative mx-auto max-w-[800px] px-4">
+			<label class={`flex rounded p-3 ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-slate-50'}`}>
 				<input
 					bind:this={inputRef}
 					bind:value={inputValue}
@@ -353,14 +353,14 @@
 					name="message-input"
 					id="message-input"
 					aria-label="Send a message"
-					class="w-full bg-inherit pr-14 text-zinc-900 font-semibold placeholder:font-normal placeholder:text-zinc-600 focus:outline-none"
+					class="w-full bg-inherit pr-14 font-semibold text-zinc-900 placeholder:font-normal placeholder:text-zinc-600 focus:outline-none"
 					placeholder="Send a message"
 					disabled={isLoading || isStreaming}
 				/>
 			</label>
 			{#if !isLoading && !isStreaming}
 				<button
-					class="ease-in-out duration-200 absolute bg-blue-700 rounded-lg top-1 right-6 w-10 h-10 disabled:bg-slate-50"
+					class="absolute right-6 top-1 h-10 w-10 rounded-lg bg-blue-700 duration-200 ease-in-out disabled:bg-slate-50"
 					disabled={!inputValue.trim()}
 				>
 					<svg
@@ -378,7 +378,7 @@
 				</button>
 			{/if}
 			{#if isLoading || isStreaming}
-				<div class="absolute top-3 right-8 placeholder-circle w-6 animate-pulse"></div>
+				<div class="placeholder-circle absolute right-8 top-3 w-6 animate-pulse"></div>
 			{/if}
 		</form>
 	</div>
