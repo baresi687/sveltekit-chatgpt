@@ -7,9 +7,9 @@ interface IChatResponseStream {
 	done?: boolean;
 }
 
-interface IChatResponses {
-	clipBoard?: string;
-	stream: [...IChatResponseStream[]];
+interface IChatHistory {
+	userMsg?: string;
+	stream?: [...IChatResponseStream[]];
 }
 
 interface IMessageArray {
@@ -33,4 +33,4 @@ interface IArr {
 	clipBoard?: string;
 }
 
-export type { IChatResponseStream, IChatResponses, IMessageArray, IStreamError, IStream, IArr };
+export type { IChatResponseStream, IChatHistory, IMessageArray, IStreamError, IStream, IArr };
