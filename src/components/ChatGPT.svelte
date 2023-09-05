@@ -2,18 +2,17 @@
 	import { CodeBlock, clipboard } from '@skeletonlabs/skeleton';
 	import type {
 		IChatResponseStream,
-		IChatResponses,
+		IChatHistory,
 		IMessageArray,
 		IStreamError
 	} from '../interfaces/types';
 	import { processTextAndCodeBlocks } from '../utils/processTextAndCodeBlocks';
 	import { handleAssistantResponse, handleStreamAborted, parseLines } from '../utils/functions';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	let inputValue = '';
 	let chatResponseStream: IChatResponseStream[] = [];
-	let chatResponses: IChatResponses[] = [];
-	let userMessageArray: string[] = [];
+	let chatHistory: IChatHistory[] = [];
 	let messageArray: IMessageArray[] = [{ role: 'system', content: 'You are a helpful assistant.' }];
 	let isLoading = false;
 	let isStreaming = false;
@@ -27,7 +26,7 @@
 	const emphasisedText = /(`[^`]*`|\s)/g;
 	const decoder = new TextDecoder('utf-8');
 
-	async function getChatResponse(data: string) {
+	async function getChatResponse(data: string, regenerate = false) {
 		const model = {
 			model: 'gpt-3.5-turbo',
 			messages: [...messageArray, { role: 'user', content: data }],
@@ -35,8 +34,8 @@
 		};
 
 		try {
-			chatResponses = [...chatResponses, { stream: [{}] }];
-			userMessageArray = [...userMessageArray, data];
+			!regenerate ? (chatHistory = [...chatHistory, { userMsg: data }]) : null;
+			chatHistory = [...chatHistory, { stream: [{}] }];
 			isLoading = true;
 			isStreamingOverOneSecond = false;
 			isError = false;
@@ -88,7 +87,7 @@
 
 							isStreamError = [...isStreamError, ...parseLines(lines).filter((line) => line.error)];
 							chatResponseStream = [...processTextAndCodeBlocks(parsedContent, chatResponseStream)];
-							chatResponses[chatResponses.length - 1].stream = [...chatResponseStream];
+							chatHistory[chatHistory.length - 1].stream = [...chatResponseStream];
 
 							if (hasStreamBeenCancelled) {
 								chatResponseStream = handleStreamAborted(chatResponseStream);
@@ -100,11 +99,7 @@
 							}
 
 							if (done) {
-								const chatResponse = chatResponses[chatResponses.length - 1];
-								const clipBoard = chatResponseStream.filter((item) => item.clipBoard)[0].clipBoard;
-
 								clipBoardBooleans = [...clipBoardBooleans, false];
-								chatResponse.clipBoard = clipBoard;
 								messageArray = handleAssistantResponse(chatResponseStream, messageArray);
 								inputValue = '';
 								return;
@@ -139,7 +134,7 @@
 						isLimitReached = true;
 						break;
 				}
-				regainFocus();
+				await regainFocus();
 			}
 		} catch (error: unknown) {
 			handleRequestError();
@@ -147,7 +142,7 @@
 			if (error instanceof Error && error.name === 'AbortError') {
 				errorString = 'Request timed out.  Please try again later';
 			}
-			regainFocus();
+			await regainFocus();
 		} finally {
 			isLoading = false;
 		}
@@ -160,11 +155,10 @@
 		}
 	}
 
-	function regainFocus() {
+	async function regainFocus() {
 		if (window.innerWidth >= 958) {
-			setTimeout(() => {
-				inputRef.focus();
-			}, 1);
+			await tick();
+			inputRef.focus();
 		}
 	}
 
@@ -175,9 +169,16 @@
 		}, 1000);
 	}
 
+	async function handleRegenerate() {
+		inputValue = chatHistory.filter((item) => item.userMsg).at(-1)?.userMsg as string;
+		chatHistory = chatHistory.slice(0, -1);
+		messageArray = messageArray.slice(0, -2);
+		await tick();
+		await getChatResponse(inputValue, true);
+	}
+
 	function handleRequestError() {
-		chatResponses = chatResponses.slice(0, -1);
-		userMessageArray = userMessageArray.slice(0, -1);
+		chatHistory = chatHistory.slice(0, -2);
 	}
 
 	onMount(() => {
@@ -187,8 +188,8 @@
 
 <div class="my-14">
 	<div class="container relative mx-auto mb-52 max-w-[800px] px-4 pb-24">
-		{#each chatResponses as chatResponse}
-			{#if userMessageArray.length}
+		{#each chatHistory as message}
+			{#if message.userMsg}
 				<div class="whitespace-pre-line break-words rounded bg-skeletonDark px-4 py-6">
 					<div class="flex items-start gap-4">
 						<svg
@@ -202,81 +203,83 @@
 								d="M12.49 7.14L3.44 2.27c-.76-.41-1.64.3-1.4 1.13l1.24 4.34c.05.18.05.36 0 .54l-1.24 4.34c-.24.83.64 1.54 1.4 1.13l9.05-4.87a.98.98 0 0 0 0-1.72Z"
 							/></svg
 						>
-						<p class="mt-1">{userMessageArray[chatResponses.indexOf(chatResponse)]}</p>
+						<p class="mt-1">{message.userMsg}</p>
 					</div>
 				</div>
-			{/if}
-			{#if chatResponse.stream.filter((item) => item.text || item.code).length}
-				<div class="relative whitespace-pre-line break-words rounded bg-slate-800 p-4">
-					<div class="flex items-start gap-4">
-						<svg
-							class="pointer-events-none shrink-0"
-							xmlns="http://www.w3.org/2000/svg"
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							><path
-								fill="currentColor"
-								d="M20.562 10.188c.25-.688.313-1.376.25-2.063c-.062-.688-.312-1.375-.625-2c-.562-.938-1.375-1.688-2.312-2.125c-1-.438-2.063-.563-3.125-.313c-.5-.5-1.063-.937-1.688-1.25C12.437 2.126 11.687 2 11 2a5.17 5.17 0 0 0-3 .938c-.875.624-1.5 1.5-1.813 2.5c-.75.187-1.375.5-2 .875c-.562.437-1 1-1.375 1.562c-.562.938-.75 2-.625 3.063a5.438 5.438 0 0 0 1.25 2.874a4.695 4.695 0 0 0-.25 2.063c.063.688.313 1.375.625 2c.563.938 1.375 1.688 2.313 2.125c1 .438 2.062.563 3.125.313c.5.5 1.062.937 1.687 1.25c.625.312 1.375.437 2.063.437a5.17 5.17 0 0 0 3-.938c.875-.625 1.5-1.5 1.812-2.5a4.543 4.543 0 0 0 1.938-.875c.562-.437 1.062-.937 1.375-1.562c.562-.938.75-2 .625-3.063c-.125-1.062-.5-2.062-1.188-2.874Zm-7.5 10.5c-1 0-1.75-.313-2.437-.875c0 0 .062-.063.125-.063l4-2.313a.488.488 0 0 0 .25-.25c.062-.125.062-.187.062-.312V11.25l1.688 1v4.625a3.685 3.685 0 0 1-3.688 3.813ZM5 17.25c-.438-.75-.625-1.625-.438-2.5c0 0 .063.063.125.063l4 2.312a.563.563 0 0 0 .313.063c.125 0 .25 0 .312-.063l4.875-2.813v1.938l-4.062 2.375A3.71 3.71 0 0 1 7.312 19c-1-.25-1.812-.875-2.312-1.75ZM3.937 8.562a3.807 3.807 0 0 1 1.938-1.624v4.75c0 .124 0 .25.062.312a.488.488 0 0 0 .25.25l4.875 2.813l-1.687 1l-4-2.313a3.697 3.697 0 0 1-1.75-2.25c-.25-.938-.188-2.063.312-2.938ZM17.75 11.75l-4.875-2.813l1.687-1l4 2.313c.625.375 1.125.875 1.438 1.5c.312.625.5 1.313.437 2.063a3.718 3.718 0 0 1-.75 1.937c-.437.563-1 1-1.687 1.25v-4.75c0-.125 0-.25-.063-.313c0 0-.062-.124-.187-.187Zm1.687-2.5s-.062-.063-.125-.063l-4-2.312c-.125-.063-.187-.063-.312-.063s-.25 0-.313.063L9.812 9.688V7.75l4.063-2.375c.625-.375 1.312-.5 2.062-.5c.688 0 1.375.25 2 .688c.563.437 1.063 1 1.313 1.625s.312 1.375.187 2.062Zm-10.5 3.5l-1.687-1V7.062c0-.687.187-1.437.562-2C8.187 4.438 8.75 4 9.375 3.688a3.365 3.365 0 0 1 2.062-.312c.688.063 1.375.375 1.938.813c0 0-.063.062-.125.062l-4 2.313a.488.488 0 0 0-.25.25c-.063.125-.063.187-.063.312v5.625Zm.875-2L12 9.5l2.187 1.25v2.5L12 14.5l-2.188-1.25v-2.5Z"
-							/></svg
-						>
-						<div
-							class={`mb-1.5 mt-1 w-full overflow-x-auto overflow-y-hidden md:mr-12 ${
-								chatResponse.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-3.5' : ''
-							}`}
-						>
-							{#each chatResponse.stream as stream}
-								{#if stream.code !== undefined}
-									<CodeBlock
-										class="my-1.5 overflow-x-auto"
-										rounded="rounded"
-										language={stream.language}
-										code={stream.code}
-									/>
-									{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
-										<span class="blinking-cursor mt-4"></span>
-									{/if}
-								{:else if stream.text}
-									<p>
-										{#each stream.text.split(emphasisedText) as text}
-											{#if text.match(/`[\s\S]*`$/g)}
-												<span class="font-semibold italic text-zinc-50">{text}</span>
-											{:else}
-												{text}
+			{:else if message.stream}
+				{#if message.stream.filter((item) => item.text || item.code).length}
+					<div class="relative whitespace-pre-line break-words rounded bg-slate-800 p-4">
+						<div class="flex items-start gap-4">
+							<svg
+								class="pointer-events-none shrink-0"
+								xmlns="http://www.w3.org/2000/svg"
+								width="32"
+								height="32"
+								viewBox="0 0 24 24"
+								><path
+									fill="currentColor"
+									d="M20.562 10.188c.25-.688.313-1.376.25-2.063c-.062-.688-.312-1.375-.625-2c-.562-.938-1.375-1.688-2.312-2.125c-1-.438-2.063-.563-3.125-.313c-.5-.5-1.063-.937-1.688-1.25C12.437 2.126 11.687 2 11 2a5.17 5.17 0 0 0-3 .938c-.875.624-1.5 1.5-1.813 2.5c-.75.187-1.375.5-2 .875c-.562.437-1 1-1.375 1.562c-.562.938-.75 2-.625 3.063a5.438 5.438 0 0 0 1.25 2.874a4.695 4.695 0 0 0-.25 2.063c.063.688.313 1.375.625 2c.563.938 1.375 1.688 2.313 2.125c1 .438 2.062.563 3.125.313c.5.5 1.062.937 1.687 1.25c.625.312 1.375.437 2.063.437a5.17 5.17 0 0 0 3-.938c.875-.625 1.5-1.5 1.812-2.5a4.543 4.543 0 0 0 1.938-.875c.562-.437 1.062-.937 1.375-1.562c.562-.938.75-2 .625-3.063c-.125-1.062-.5-2.062-1.188-2.874Zm-7.5 10.5c-1 0-1.75-.313-2.437-.875c0 0 .062-.063.125-.063l4-2.313a.488.488 0 0 0 .25-.25c.062-.125.062-.187.062-.312V11.25l1.688 1v4.625a3.685 3.685 0 0 1-3.688 3.813ZM5 17.25c-.438-.75-.625-1.625-.438-2.5c0 0 .063.063.125.063l4 2.312a.563.563 0 0 0 .313.063c.125 0 .25 0 .312-.063l4.875-2.813v1.938l-4.062 2.375A3.71 3.71 0 0 1 7.312 19c-1-.25-1.812-.875-2.312-1.75ZM3.937 8.562a3.807 3.807 0 0 1 1.938-1.624v4.75c0 .124 0 .25.062.312a.488.488 0 0 0 .25.25l4.875 2.813l-1.687 1l-4-2.313a3.697 3.697 0 0 1-1.75-2.25c-.25-.938-.188-2.063.312-2.938ZM17.75 11.75l-4.875-2.813l1.687-1l4 2.313c.625.375 1.125.875 1.438 1.5c.312.625.5 1.313.437 2.063a3.718 3.718 0 0 1-.75 1.937c-.437.563-1 1-1.687 1.25v-4.75c0-.125 0-.25-.063-.313c0 0-.062-.124-.187-.187Zm1.687-2.5s-.062-.063-.125-.063l-4-2.312c-.125-.063-.187-.063-.312-.063s-.25 0-.313.063L9.812 9.688V7.75l4.063-2.375c.625-.375 1.312-.5 2.062-.5c.688 0 1.375.25 2 .688c.563.437 1.063 1 1.313 1.625s.312 1.375.187 2.062Zm-10.5 3.5l-1.687-1V7.062c0-.687.187-1.437.562-2C8.187 4.438 8.75 4 9.375 3.688a3.365 3.365 0 0 1 2.062-.312c.688.063 1.375.375 1.938.813c0 0-.063.062-.125.062l-4 2.313a.488.488 0 0 0-.25.25c-.063.125-.063.187-.063.312v5.625Zm.875-2L12 9.5l2.187 1.25v2.5L12 14.5l-2.188-1.25v-2.5Z"
+								/></svg
+							>
+							<div
+								class={`mt-1 w-full overflow-x-auto overflow-y-hidden md:mr-12 ${
+									message.stream.filter((obj) => obj.text).length > 1 ? 'md:mb-3.5' : 'md:mb-1.5'
+								}`}
+							>
+								{#each message.stream as stream}
+									{#if stream.code || stream.text}
+										{#if stream.code !== undefined}
+											<CodeBlock
+												class="my-1.5 overflow-x-auto"
+												rounded="rounded"
+												language={stream.language}
+												code={stream.code}
+											/>
+											{#if isStreaming && chatHistory.at(-1) === message && message.stream.at(-1) === stream}
+												<span class="blinking-cursor mt-4"></span>
 											{/if}
-										{/each}
-										{#if isStreaming && chatResponses.at(-1) === chatResponse && chatResponse.stream.at(-1) === stream}
-											<span class="blinking-cursor -ml-0.5"></span>
+										{:else if stream.text}
+											<p>
+												{#each stream.text.split(emphasisedText) as text}
+													{#if text.match(/`[\s\S]*`$/g)}
+														<span class="font-semibold italic text-zinc-50">{text}</span>
+													{:else}
+														{text}
+													{/if}
+												{/each}
+												{#if isStreaming && chatHistory.at(-1) === message && message.stream.at(-1) === stream}
+													<span class="blinking-cursor -ml-0.5"></span>
+												{/if}
+											</p>
 										{/if}
-									</p>
-								{/if}
-							{/each}
+									{:else if stream.clipBoard}
+										<button
+											class="bottom-4 right-4 ml-auto mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-600 duration-100 ease-in hover:border-slate-900 hover:bg-slate-900 md:absolute md:h-8 md:w-8"
+											aria-label="Copy text"
+											use:clipboard={stream.clipBoard}
+											on:click={() => handleClipBoardClick(chatHistory.indexOf(message))}
+											>{#if clipBoardBooleans[chatHistory.indexOf(message)]}
+												👍
+											{:else}
+												<svg
+													class="pointer-events-none"
+													xmlns="http://www.w3.org/2000/svg"
+													width="16"
+													height="16"
+													viewBox="0 0 256 256"
+													><path
+														fill="#94a3b8"
+														d="M216 36H88a4 4 0 0 0-4 4v44H40a4 4 0 0 0-4 4v128a4 4 0 0 0 4 4h128a4 4 0 0 0 4-4v-44h44a4 4 0 0 0 4-4V40a4 4 0 0 0-4-4Zm-52 176H44V92h120Zm48-48h-40V88a4 4 0 0 0-4-4H92V44h120Z"
+													/></svg
+												>
+											{/if}
+										</button>
+									{/if}
+								{/each}
+							</div>
 						</div>
 					</div>
-					{#if chatResponse.clipBoard}
-						<button
-							class="bottom-4 right-4 ml-auto mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-600 duration-100 ease-in hover:border-slate-900 hover:bg-slate-900 md:absolute md:h-8 md:w-8"
-							aria-label="Copy text"
-							use:clipboard={chatResponse.clipBoard}
-							on:click={() => handleClipBoardClick(chatResponses.indexOf(chatResponse))}
-							>{#if clipBoardBooleans[chatResponses.indexOf(chatResponse)]}
-								👍
-							{:else}
-								<svg
-									class="pointer-events-none"
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 256 256"
-									><path
-										fill="#94a3b8"
-										d="M216 36H88a4 4 0 0 0-4 4v44H40a4 4 0 0 0-4 4v128a4 4 0 0 0 4 4h128a4 4 0 0 0 4-4v-44h44a4 4 0 0 0 4-4V40a4 4 0 0 0-4-4Zm-52 176H44V92h120Zm48-48h-40V88a4 4 0 0 0-4-4H92V44h120Z"
-									/></svg
-								>
-							{/if}
-						</button>
-					{/if}
-				</div>
+				{/if}
 			{/if}
 		{/each}
 		{#if isLoading}
@@ -323,26 +326,53 @@
 			{/if}
 		</div>
 	</div>
-	{#if isStreaming && isStreamingOverOneSecond}
-		<div id="stop-generating" class="fixed bottom-40 flex w-full justify-center">
-			<button
-				on:click={() => (hasStreamBeenCancelled = true)}
-				class="btn border-2 border-slate-800 bg-slate-900"
-			>
-				<span class="pointer-events-none"
-					><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16"
-						><path
-							fill="currentColor"
-							fill-rule="evenodd"
-							d="M12.035 13.096a6.5 6.5 0 0 1-9.131-9.131l9.131 9.131Zm1.061-1.06L3.965 2.903a6.5 6.5 0 0 1 9.131 9.131ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Z"
-							clip-rule="evenodd"
-						/></svg
-					></span
+	<div
+		id="stop-generating"
+		class={`pointer-events-none fixed bottom-40 flex w-full justify-center duration-200 ease-in-out ${
+			isStreaming && isStreamingOverOneSecond ? 'visible opacity-100' : 'invisible opacity-0'
+		}`}
+	>
+		<button
+			on:click={() => (hasStreamBeenCancelled = true)}
+			class={`btn pointer-events-auto border-2 border-slate-800 bg-slate-900 duration-200 ease-in-out
+			${isStreaming ? '' : 'hidden'}`}
+		>
+			<span class="pointer-events-none">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 1024 1024"
+					><path
+						fill="currentColor"
+						d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448s448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372c0-89 31.3-170.8 83.5-234.8l523.3 523.3C682.8 852.7 601 884 512 884zm288.5-137.2L277.2 223.5C341.2 171.3 423 140 512 140c205.4 0 372 166.6 372 372c0 89-31.3 170.8-83.5 234.8z"
+					/></svg
 				>
-				<span class="pointer-events-none">Stop generating</span>
-			</button>
-		</div>
-	{/if}
+			</span>
+			<span class="pointer-events-none">Stop generating</span>
+		</button>
+	</div>
+	<div
+		id="regenerate"
+		class={`pointer-events-none fixed bottom-40 flex w-full justify-center delay-300 duration-200 ease-in ${
+			chatHistory.length && !isLoading && !isStreaming && !isError
+				? 'visible opacity-100'
+				: 'invisible opacity-0'
+		}`}
+	>
+		<button
+			on:click={handleRegenerate}
+			class={`btn pointer-events-auto border-2 border-slate-800 bg-slate-900 duration-200 ease-in-out ${
+				chatHistory.length && !isLoading && !isStreaming && !isError ? '' : 'hidden'
+			}`}
+		>
+			<span class="pointer-events-none">
+				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 1200 1200"
+					><path
+						fill="currentColor"
+						d="M600 0C308.74 0 66.009 207.555 11.499 482.812h166.553C229.37 297.756 398.603 161.719 600 161.719c121.069 0 230.474 49.195 309.668 128.613l-192.48 192.48H1200V0l-175.781 175.781C915.653 67.181 765.698 0 600 0zM0 717.188V1200l175.781-175.781C284.346 1132.819 434.302 1200 600 1200c291.26 0 533.991-207.555 588.501-482.812h-166.553C970.631 902.243 801.396 1038.281 600 1038.281c-121.069 0-230.474-49.195-309.668-128.613l192.48-192.48H0z"
+					/></svg
+				>
+			</span>
+			<span class="pointer-events-none">Regenerate</span>
+		</button>
+	</div>
 	<div class="fixed bottom-0 z-50 mt-4 w-full bg-slate-800 pb-14 pt-8">
 		<form on:submit={handleChat} class="relative mx-auto max-w-[800px] px-4">
 			<label class={`flex rounded p-3 ${isLoading || isStreaming ? 'bg-gray-400' : 'bg-slate-50'}`}>

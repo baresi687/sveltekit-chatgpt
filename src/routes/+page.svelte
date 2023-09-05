@@ -13,9 +13,8 @@
 			const isDesktop = window.innerWidth >= 958;
 			const isMobile = mainRef.scrollHeight - scrollHeight >= 70;
 
-			if (isScroll && (isDesktop || isMobile)) {
-				handleAutoScroll();
-			}
+			if (isScroll && (isDesktop || isMobile)) handleAutoScroll();
+			isScroll = mainRef.scrollHeight - (mainRef.scrollTop + mainRef.offsetHeight) < 1;
 		});
 
 		resizeObserver.observe(chatContainerRef);
@@ -31,7 +30,7 @@
 		scrollPos = mainRef.scrollTop >= scrollPos ? mainRef.scrollTop : scrollPos;
 		isScroll = mainRef.scrollTop >= scrollPos;
 
-		if (mainRef.scrollTop + mainRef.offsetHeight >= mainRef.scrollHeight) {
+		if (mainRef.scrollHeight - (mainRef.scrollTop + mainRef.offsetHeight) < 1) {
 			isScroll = true;
 			handleAutoScroll();
 		}
@@ -53,7 +52,7 @@
 						mainRef.scrollTo({ top: mainRef.scrollHeight, left: 0, behavior: 'auto' })}
 					aria-label="Scroll to bottom"
 					type="button"
-					class={`absolute bottom-40 left-[26px] duration-200 ease-in-out ${
+					class={`absolute bottom-40 left-[26px] z-50 duration-200 ease-in-out ${
 						isScroll ? 'invisible opacity-0' : 'visible opacity-100'
 					} pointer-events-auto mb-0.5 flex h-11 w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-900 hover:brightness-125 md:left-auto md:right-7`}
 					><svg
