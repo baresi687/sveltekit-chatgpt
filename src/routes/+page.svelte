@@ -6,14 +6,10 @@
 	let chatContainerRef: HTMLElement;
 	let scrollPos = 0;
 	let isScroll = true;
-	let scrollHeight = 0;
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(() => {
-			const isDesktop = window.innerWidth >= 958;
-			const isMobile = mainRef.scrollHeight - scrollHeight >= 70;
-
-			if (isScroll && (isDesktop || isMobile)) handleAutoScroll();
+			if (isScroll) handleAutoScroll();
 			isScroll = mainRef.scrollHeight - (mainRef.scrollTop + mainRef.offsetHeight) < 1;
 		});
 
@@ -27,7 +23,6 @@
 	}
 
 	function handleManualScroll() {
-		scrollPos = mainRef.scrollTop >= scrollPos ? mainRef.scrollTop : scrollPos;
 		isScroll = mainRef.scrollTop >= scrollPos;
 
 		if (mainRef.scrollHeight - (mainRef.scrollTop + mainRef.offsetHeight) < 1) {
@@ -48,11 +43,10 @@
 			<ChatGPT />
 			<div class="pointer-events-none absolute inset-0 mx-auto my-0 max-w-5xl">
 				<button
-					on:click={() =>
-						mainRef.scrollTo({ top: mainRef.scrollHeight, left: 0, behavior: 'auto' })}
+					on:click={handleAutoScroll}
 					aria-label="Scroll to bottom"
 					type="button"
-					class={`absolute bottom-40 left-[26px] z-50 duration-200 ease-in-out ${
+					class={`absolute bottom-40 left-[26px] z-50 delay-75 duration-100 ease-in-out ${
 						isScroll ? 'invisible opacity-0' : 'visible opacity-100'
 					} pointer-events-auto mb-0.5 flex h-11 w-11 items-center justify-center rounded-full border-2 border-slate-800 bg-slate-900 hover:brightness-125 md:left-auto md:right-7`}
 					><svg
