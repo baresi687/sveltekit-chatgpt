@@ -71,10 +71,6 @@ To run the unit tests:
 npm run test
 ```
 
-## Deployed site
-
-[SvelteKit ChatGPT](https://sveltekit-chatgpt-hreinn.netlify.app/)
-
 ## Contact
 
 [My LinkedIn page](https://www.linkedin.com/in/hreinn-gylfason-b9a48521a/)
