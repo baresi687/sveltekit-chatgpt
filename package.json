@@ -40,6 +40,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"highlight.js": "^11.8.0"
+		"highlight.js": "^11.9.0"
 	}
 }
