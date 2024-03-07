@@ -17,7 +17,11 @@ const config = {
 		)
 	],
 	theme: {
-		extend: {},
+		extend: {
+			colors: {
+				skeletonDark: '#15171f'
+			}
+		},
 	},
 	plugins: [
 		// 4. Append the Skeleton plugin (after other plugins)
