@@ -15,9 +15,11 @@
 	},
 	"devDependencies": {
 		"@skeletonlabs/skeleton": "^2.9.0",
+		"@skeletonlabs/tw-plugin": "^0.3.1",
 		"@sveltejs/adapter-auto": "^2.0.0",
 		"@sveltejs/adapter-netlify": "^2.0.7",
 		"@sveltejs/kit": "^1.30.4",
+		"@types/node": "^20.11.25",
 		"@typescript-eslint/eslint-plugin": "^5.62.0",
 		"@typescript-eslint/parser": "^5.61.0",
 		"autoprefixer": "^10.4.14",
