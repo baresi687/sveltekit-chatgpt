@@ -395,7 +395,7 @@
 				>
 					<svg
 						aria-label="Submit message"
-						class={`pointer-events-none ${!inputValue.trim() ? 'text-slate-600' : 'text-slate-50'}`}
+						class={`pointer-events-none ${!inputValue.trim() ? 'text-slate-400' : 'text-slate-50'}`}
 						xmlns="http://www.w3.org/2000/svg"
 						width="32"
 						height="24"
